@@ -1,4 +1,4 @@
-import { domToBlob } from 'modern-screenshot';
+import { domToCanvas } from 'modern-screenshot';
 import { browser } from 'wxt/browser';
 import { CSS_INSPECTOR_FETCH_IMAGE, type FetchImageMessage } from './messages';
 
@@ -34,13 +34,77 @@ async function renderElementPng(el: Element, exclude: Node): Promise<Blob> {
     MAX_SIDE / height,
     Math.sqrt(MAX_AREA / (width * height)),
   );
-  return domToBlob(el, {
+  // Not using the library's `backgroundColor` option: it also forces `background-color` onto the
+  // element itself, which would wipe out the element's own background.
+  const rendered = await domToCanvas(el, {
     scale,
-    type: 'image/png',
     timeout: 15_000,
     filter: (node) => node !== exclude,
     fetchFn: fetchImageViaBackground,
   });
+
+  const out = document.createElement('canvas');
+  out.width = rendered.width;
+  out.height = rendered.height;
+  const ctx = out.getContext('2d')!;
+  ctx.fillStyle = backdropColor(el);
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(rendered, 0, 0);
+  return new Promise((resolve, reject) =>
+    out.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('生成图片失败'))), 'image/png'),
+  );
+}
+
+type Rgba = [r: number, g: number, b: number, a: number];
+
+let probe: CanvasRenderingContext2D | null = null;
+
+/** Parses any CSS color (rgb, oklch, color(), ...) by painting it on a 1×1 canvas. */
+function toRgba(color: string): Rgba {
+  probe ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
+  probe.clearRect(0, 0, 1, 1);
+  probe.fillStyle = '#000';
+  probe.fillStyle = color;
+  probe.fillRect(0, 0, 1, 1);
+  const [r = 0, g = 0, b = 0, a = 0] = probe.getImageData(0, 0, 1, 1).data;
+  return [r, g, b, a / 255];
+}
+
+function parentOf(el: Element): Element | null {
+  if (el.parentElement) return el.parentElement;
+  const root = el.getRootNode();
+  return root instanceof ShadowRoot ? root.host : null;
+}
+
+/** The browser's default canvas: white, or dark when the page opts into a dark color scheme. */
+function canvasColor(): Rgba {
+  const scheme = getComputedStyle(document.documentElement).colorScheme;
+  const dark = scheme.includes('dark') && (!scheme.includes('light') || matchMedia('(prefers-color-scheme: dark)').matches);
+  return dark ? [18, 18, 18, 1] : [255, 255, 255, 1];
+}
+
+/**
+ * The solid color the element visually sits on: ancestors' background colors composited
+ * (handles semi-transparent layers) down to the first opaque one, or the page canvas.
+ */
+export function backdropColor(el: Element): string {
+  const layers: Rgba[] = [];
+  let base: Rgba | null = null;
+  for (let node = parentOf(el); node; node = parentOf(node)) {
+    const color = toRgba(getComputedStyle(node).backgroundColor);
+    if (color[3] >= 1) {
+      base = color;
+      break;
+    }
+    if (color[3] > 0) layers.push(color);
+  }
+  let [r, g, b] = base ?? canvasColor();
+  for (const [lr, lg, lb, la] of layers.reverse()) {
+    r = lr * la + r * (1 - la);
+    g = lg * la + g * (1 - la);
+    b = lb * la + b * (1 - la);
+  }
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
 
 /** Renders the element to a PNG and downloads it. */
