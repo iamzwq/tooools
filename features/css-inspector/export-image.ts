@@ -24,28 +24,44 @@ export function imageFileName(label: string, now = new Date()): string {
   return `${base}-${stamp}.png`;
 }
 
-/** Renders the element to a PNG and downloads it. */
-export async function exportElementImage(el: Element, exclude: Node, fileName: string): Promise<void> {
+/** Renders the element to a PNG blob, scaled for sharpness but within canvas limits. */
+async function renderElementPng(el: Element, exclude: Node): Promise<Blob> {
   const { width, height } = el.getBoundingClientRect();
-  if (width < 1 || height < 1) throw new Error('元素没有可见尺寸，无法导出');
+  if (width < 1 || height < 1) throw new Error('元素没有可见尺寸');
   const scale = Math.min(
     Math.max(2, devicePixelRatio || 1),
     MAX_SIDE / width,
     MAX_SIDE / height,
     Math.sqrt(MAX_AREA / (width * height)),
   );
-  const blob = await domToBlob(el, {
+  return domToBlob(el, {
     scale,
     type: 'image/png',
     timeout: 15_000,
     filter: (node) => node !== exclude,
     fetchFn: fetchImageViaBackground,
   });
+}
 
+/** Renders the element to a PNG and downloads it. */
+export async function exportElementImage(el: Element, exclude: Node, fileName: string): Promise<void> {
+  const blob = await renderElementPng(el, exclude);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = fileName;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+/**
+ * Renders the element to a PNG and puts it on the clipboard.
+ * Must be called synchronously from a click handler: the blob is passed to ClipboardItem as a
+ * promise so the user activation is not lost while rendering.
+ */
+export function copyElementImage(el: Element, exclude: Node): Promise<void> {
+  if (!window.isSecureContext || !navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+    return Promise.reject(new Error('非 HTTPS 页面不允许写入图片到剪贴板，请改用「导出图片」'));
+  }
+  return navigator.clipboard.write([new ClipboardItem({ 'image/png': renderElementPng(el, exclude) })]);
 }

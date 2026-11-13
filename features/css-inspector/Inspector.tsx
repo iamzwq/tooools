@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { ArrowDown, ArrowUp, Check, Copy, ImageDown, Loader2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, Copy, ImageDown, Images, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { BaselineStyles, elementLabel, extractRule, formatRule, type ExtractedRule } from './extract-css';
-import { exportElementImage, imageFileName } from './export-image';
+import { copyElementImage, exportElementImage, imageFileName } from './export-image';
 
 interface Props {
   /** Shadow host of this UI; events coming from it are ours and must not be intercepted. */
@@ -63,7 +63,8 @@ export default function Inspector({ host, onExit }: Props) {
   const [selBox, setSelBox] = useState<Box | null>(null);
   const [panelPos, setPanelPos] = useState<{ x: number; y: number } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [imageTask, setImageTask] = useState<'export' | 'copy' | null>(null);
+  const [imageCopied, setImageCopied] = useState(false);
   const [error, setError] = useState('');
   const dragged = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -214,17 +215,31 @@ export default function Inspector({ host, onExit }: Props) {
     selectRef.current(child);
   };
 
-  const exportImage = async () => {
-    if (!selection || exporting) return;
-    setExporting(true);
+  const runImageTask = async (kind: 'export' | 'copy', task: Promise<void>) => {
+    setImageTask(kind);
     setError('');
     try {
-      await exportElementImage(selection.el, host, imageFileName(selection.label));
+      await task;
+      if (kind === 'copy') {
+        setImageCopied(true);
+        setTimeout(() => setImageCopied(false), 1500);
+      }
     } catch (err) {
-      setError(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+      setError(`${kind === 'copy' ? '复制图片' : '导出'}失败：${err instanceof Error ? err.message : String(err)}`);
     } finally {
-      setExporting(false);
+      setImageTask(null);
     }
+  };
+
+  const exportImage = () => {
+    if (!selection || imageTask) return;
+    void runImageTask('export', exportElementImage(selection.el, host, imageFileName(selection.label)));
+  };
+
+  // Clipboard writes need the click's user activation, so start the write synchronously.
+  const copyImage = () => {
+    if (!selection || imageTask) return;
+    void runImageTask('copy', copyElementImage(selection.el, host));
   };
 
   const showHover = hoverBox && hoverEl.current !== selection?.el;
@@ -302,15 +317,23 @@ export default function Inspector({ host, onExit }: Props) {
           <pre className="flex-1 overflow-auto p-3 font-mono text-xs leading-5 select-text">
             <CssCode rule={selection.rule} />
           </pre>
+          {error && (
+            <div className="border-t px-3 py-1.5 text-xs text-destructive" role="alert">
+              {error}
+            </div>
+          )}
           <div className="flex items-center gap-2 border-t px-3 py-2">
-            <span className={`min-w-0 flex-1 truncate text-xs ${error ? 'text-destructive' : 'text-muted-foreground'}`} title={error}>
-              {error || '点击其他元素继续 · Esc 退出'}
-            </span>
-            <Button size="sm" variant="outline" onClick={exportImage} disabled={exporting}>
-              {exporting ? <Loader2 className="animate-spin" /> : <ImageDown />}
-              {exporting ? '导出中…' : '导出图片'}
-            </Button>
-            <Button size="sm" onClick={copy}>
+            <ButtonGroup aria-label="图片">
+              <Button size="sm" variant="outline" onClick={exportImage} disabled={!!imageTask} title="下载为 PNG 文件">
+                {imageTask === 'export' ? <Loader2 className="animate-spin" /> : <ImageDown />}
+                {imageTask === 'export' ? '导出中…' : '导出图片'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={copyImage} disabled={!!imageTask} title="复制 PNG 到剪贴板">
+                {imageTask === 'copy' ? <Loader2 className="animate-spin" /> : imageCopied ? <Check /> : <Images />}
+                {imageTask === 'copy' ? '复制中…' : imageCopied ? '已复制' : '复制图片'}
+              </Button>
+            </ButtonGroup>
+            <Button size="sm" className="ml-auto" onClick={copy}>
               {copied ? <Check /> : <Copy />}
               {copied ? '已复制' : '复制 CSS'}
             </Button>
