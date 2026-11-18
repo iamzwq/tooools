@@ -21,6 +21,7 @@ function rebuildMenus(): Promise<void> {
       for (const menu of feature.contextMenus ?? []) {
         browser.contextMenus.create({
           id: `${feature.id}:${menu.id}`,
+          parentId: menu.parentId ? `${feature.id}:${menu.parentId}` : undefined,
           title: menu.title,
           contexts: menu.contexts,
         });
@@ -45,7 +46,7 @@ export default defineBackground(() => {
 
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
     const menu = menuHandlers.get(String(info.menuItemId));
-    if (!menu) return;
+    if (!menu?.onClick) return;
     try {
       await menu.onClick(info, tab);
     } catch (err) {

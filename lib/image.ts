@@ -62,6 +62,46 @@ function cleanMime(contentType: string | null): string {
   return (contentType ?? '').split(';')[0]!.trim().toLowerCase();
 }
 
+/** Detects the real image type from magic bytes (servers often send wrong or generic types). */
+export function sniffImageMime(data: ArrayBuffer, fallback = ''): string {
+  const b = new Uint8Array(data, 0, Math.min(data.byteLength, 512));
+  const ascii = (start: number, end: number) => String.fromCharCode(...b.subarray(start, end));
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b[0] === 0x89 && ascii(1, 4) === 'PNG') return 'image/png';
+  if (ascii(0, 4) === 'GIF8') return 'image/gif';
+  if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return 'image/webp';
+  if (ascii(4, 8) === 'ftyp' && /^avi[fs]$/.test(ascii(8, 12))) return 'image/avif';
+  if (ascii(0, 2) === 'BM') return 'image/bmp';
+  if (b[0] === 0 && b[1] === 0 && b[2] === 1 && b[3] === 0) return 'image/x-icon';
+  if (/<svg[\s>]/i.test(new TextDecoder().decode(b))) return 'image/svg+xml';
+  return fallback;
+}
+
+export function extForMime(mimeType: string): string | undefined {
+  return EXT_BY_MIME[mimeType];
+}
+
+/** Replaces (or adds) the file extension. */
+export function replaceExtension(fileName: string, ext: string): string {
+  return `${fileName.replace(/\.[a-z0-9]{2,5}$/i, '')}.${ext}`;
+}
+
+/** Strips characters that are invalid in file names on Windows/macOS/Linux and in chrome.downloads. */
+export function sanitizeFileName(name: string): string {
+  return name
+    .replace(/[\\/:*?"<>|~\x00-\x1f]/g, '_')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s.]+|[\s.]+$/g, '')
+    .slice(0, 150);
+}
+
+export function arrayBufferToDataUrl(data: ArrayBuffer, mimeType: string): string {
+  const bytes = new Uint8Array(data);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:${mimeType || 'application/octet-stream'};base64,${btoa(binary)}`;
+}
+
 /** Builds a safe file name from the image URL, making sure it has a matching extension. */
 export function buildFileName(srcUrl: string, mimeType: string, now = new Date()): string {
   let base = '';

@@ -7,7 +7,7 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
-  manifest: {
+  manifest: ({ browser }) => ({
     name: 'Tooools',
     description: '日常使用电脑的小工具集合',
     permissions: [
@@ -16,9 +16,12 @@ export default defineConfig({
       'notifications',
       'scripting',
       'declarativeNetRequestWithHostAccess',
+      'downloads',
+      // Chrome MV3 service workers can't decode SVG; Firefox background pages have a DOM.
+      ...(browser === 'firefox' ? [] : ['offscreen']),
     ],
     // Needed to download images from any site and call the 123云盘 API without CORS issues.
     host_permissions: ['<all_urls>'],
-  },
+  }),
 });
 

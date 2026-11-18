@@ -3,7 +3,7 @@ import type { Feature } from '@/features/types';
 import { notify } from '@/utils/notify';
 import { getPan123Auth, pan123FolderItem, PAN123_HOME } from './auth';
 import { Pan123AuthError, Pan123Client } from './client';
-import { buildFileName, fetchImage } from './image';
+import { buildFileName, fetchImage } from '@/lib/image';
 
 const folderIdCache = new Map<string, number>();
 

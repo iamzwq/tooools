@@ -7,7 +7,10 @@ export interface FeatureContextMenu {
   id: string;
   title: string;
   contexts: [MenuContext, ...MenuContext[]];
-  onClick: (info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => void | Promise<void>;
+  /** Local id of the parent menu (declared earlier in the same feature) to create a submenu item. */
+  parentId?: string;
+  /** Omit for parent menus that only group submenu items. */
+  onClick?: (info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => void | Promise<void>;
 }
 
 export interface Feature {
