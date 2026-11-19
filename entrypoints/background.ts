@@ -54,4 +54,17 @@ export default defineBackground(() => {
       await notify('操作失败', err instanceof Error ? err.message : String(err));
     }
   });
+
+  browser.commands.onCommand.addListener(async (name, tab) => {
+    const feature = features.find((f) => f.commands?.some((c) => c.name === name));
+    const command = feature?.commands?.find((c) => c.name === name);
+    if (!feature || !command || !isFeatureEnabled(feature, await getFeatureEnabledMap())) return;
+    try {
+      tab ??= (await browser.tabs.query({ active: true, currentWindow: true }))[0];
+      await command.onCommand(tab);
+    } catch (err) {
+      console.error(`[tooools] command ${name} failed`, err);
+      await notify('操作失败', err instanceof Error ? err.message : String(err));
+    }
+  });
 });

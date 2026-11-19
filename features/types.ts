@@ -13,6 +13,12 @@ export interface FeatureContextMenu {
   onClick?: (info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab) => void | Promise<void>;
 }
 
+export interface FeatureCommand {
+  /** Command name; must also be declared under `commands` in wxt.config.ts (the manifest is static). */
+  name: string;
+  onCommand: (tab?: Browser.tabs.Tab) => void | Promise<void>;
+}
+
 export interface Feature {
   /** Stable id, used as storage key and menu id prefix. */
   id: string;
@@ -21,6 +27,8 @@ export interface Feature {
   defaultEnabled?: boolean;
   /** Right-click menus, created only while the feature is enabled. */
   contextMenus?: FeatureContextMenu[];
+  /** Keyboard shortcuts, ignored while the feature is disabled. */
+  commands?: FeatureCommand[];
   /** Runs once when the background service worker starts (register listeners here). */
   setupBackground?: () => void;
 }

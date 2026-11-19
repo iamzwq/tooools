@@ -41,8 +41,11 @@ export default defineContentScript({
       ui.mount();
     };
 
-    browser.runtime.onMessage.addListener((message: unknown) => {
-      if ((message as { type?: string } | null)?.type === CSS_INSPECTOR_START) void start();
+    browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+      if ((message as { type?: string } | null)?.type !== CSS_INSPECTOR_START) return;
+      void start();
+      // Tells startCssInspector() this script is loaded (other content scripts may also listen).
+      sendResponse(true);
     });
     await start();
   },

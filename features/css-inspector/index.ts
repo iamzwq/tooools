@@ -1,6 +1,6 @@
 import { browser } from 'wxt/browser';
 import type { Feature } from '@/features/types';
-import { CSS_INSPECTOR_FETCH_IMAGE, type FetchImageMessage } from './messages';
+import { CSS_INSPECTOR_COMMAND, CSS_INSPECTOR_FETCH_IMAGE, type FetchImageMessage } from './messages';
 import { startCssInspector } from './start';
 
 async function fetchAsDataUrl(url: string): Promise<string | null> {
@@ -27,6 +27,14 @@ export const cssInspector: Feature = {
       title: '检查元素 CSS',
       contexts: ['page', 'link', 'image', 'selection', 'video', 'audio', 'editable'],
       onClick: (_info, tab) => {
+        if (tab?.id != null) return startCssInspector(tab.id);
+      },
+    },
+  ],
+  commands: [
+    {
+      name: CSS_INSPECTOR_COMMAND,
+      onCommand: (tab) => {
         if (tab?.id != null) return startCssInspector(tab.id);
       },
     },
