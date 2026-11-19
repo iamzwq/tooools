@@ -52,35 +52,45 @@ export default function ExportImageOptions() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={qualityId}>JPG / WebP 质量</Label>
-          <Input
-            id={qualityId}
-            type="number"
-            min={1}
-            max={100}
-            value={quality}
-            onChange={(e) => setQuality(e.target.value)}
-            onBlur={commitQuality}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={backgroundId}>JPG 透明区域填充</Label>
-          <Input
-            id={backgroundId}
-            type="color"
-            className="p-1"
-            value={settings.jpegBackground}
-            onChange={(e) => update({ jpegBackground: e.target.value }, { debounce: true })}
-            onBlur={flush}
-          />
-        </div>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={qualityId} className="text-xs font-normal text-muted-foreground">
+          JPG / WebP 质量
+        </Label>
+        <Input
+          id={qualityId}
+          type="number"
+          min={1}
+          max={100}
+          className="h-7 w-16 bg-background px-2 text-xs md:text-xs"
+          value={quality}
+          onChange={(e) => setQuality(e.target.value)}
+          onBlur={commitQuality}
+        />
       </div>
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={saveAsId}>每次询问保存位置</Label>
-        <Switch id={saveAsId} checked={settings.saveAs} onCheckedChange={(checked) => update({ saveAs: checked })} />
+        <Label htmlFor={backgroundId} className="text-xs font-normal text-muted-foreground">
+          JPG 透明背景
+        </Label>
+        <Input
+          id={backgroundId}
+          type="color"
+          className="h-7 w-16 bg-background p-0.5"
+          value={settings.jpegBackground}
+          onChange={(e) => update({ jpegBackground: e.target.value }, { debounce: true })}
+          onBlur={flush}
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={saveAsId} className="text-xs font-normal text-muted-foreground">
+          每次询问保存位置
+        </Label>
+        <Switch
+          id={saveAsId}
+          size="sm"
+          checked={settings.saveAs}
+          onCheckedChange={(checked) => update({ saveAs: checked })}
+        />
       </div>
     </div>
   );

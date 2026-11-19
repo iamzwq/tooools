@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Keyboard, MousePointerClick } from 'lucide-react';
+import { MousePointerClick } from 'lucide-react';
 import { browser } from 'wxt/browser';
 import { Button } from '@/components/ui/button';
+import { notify } from '@/utils/notify';
 import { CSS_INSPECTOR_COMMAND } from './messages';
 import { startCssInspector } from './start';
 
@@ -13,8 +14,27 @@ async function openShortcutSettings(): Promise<void> {
   await browser.tabs.create({ url });
 }
 
+/** Row button: start picking an element on the current tab. */
+export function CssInspectorAction() {
+  async function start() {
+    try {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id == null) throw new Error('找不到当前标签页');
+      await startCssInspector(tab.id);
+      window.close();
+    } catch (err) {
+      await notify('检查元素 CSS', err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  return (
+    <Button size="icon-sm" variant="ghost" className="size-7" onClick={start} title="开始选取元素" aria-label="开始选取元素">
+      <MousePointerClick />
+    </Button>
+  );
+}
+
 export default function CssInspectorOptions() {
-  const [error, setError] = useState('');
   const [shortcut, setShortcut] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,50 +43,19 @@ export default function CssInspectorOptions() {
     });
   }, []);
 
-  async function start() {
-    setError('');
-    try {
-      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id == null) throw new Error('找不到当前标签页');
-      await startCssInspector(tab.id);
-      window.close();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  async function editShortcut() {
-    try {
-      await openShortcutSettings();
-      window.close();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
-  }
+  if (shortcut === null) return null;
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button size="sm" onClick={start}>
-        <MousePointerClick />
-        开始选取元素
-      </Button>
-      {shortcut !== null && (
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground">
-            快捷键：
-            {shortcut ? (
-              <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">{shortcut}</kbd>
-            ) : (
-              '未设置'
-            )}
-          </span>
-          <Button variant="outline" size="sm" onClick={editShortcut}>
-            <Keyboard />
-            修改
-          </Button>
-        </div>
-      )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">快捷键</span>
+      <button
+        type="button"
+        className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-foreground hover:bg-accent"
+        onClick={() => void openShortcutSettings().then(() => window.close())}
+        title="在浏览器快捷键设置中修改"
+      >
+        {shortcut || '未设置'}
+      </button>
     </div>
   );
 }

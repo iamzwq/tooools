@@ -1,6 +1,7 @@
 ﻿import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 import { CSS_INSPECTOR_COMMAND, CSS_INSPECTOR_DEFAULT_SHORTCUT } from './features/css-inspector/messages';
+import { LAYOUT_XRAY_COMMAND, LAYOUT_XRAY_DEFAULT_SHORTCUT } from './features/layout-xray/messages';
 
 // See https://wxt.dev/api/reference/wxt/interfaces/inlineconfig.html
 export default defineConfig({
@@ -30,6 +31,10 @@ export default defineConfig({
       [CSS_INSPECTOR_COMMAND]: {
         suggested_key: { default: CSS_INSPECTOR_DEFAULT_SHORTCUT },
         description: '检查元素 CSS：开始选取元素',
+      },
+      [LAYOUT_XRAY_COMMAND]: {
+        suggested_key: { default: LAYOUT_XRAY_DEFAULT_SHORTCUT },
+        description: '布局透视：切换当前页布局高亮',
       },
     },
   }),

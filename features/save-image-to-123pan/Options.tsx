@@ -3,6 +3,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { pan123AuthItem, pan123FolderItem, PAN123_HOME, refreshAuthFromOpenTabs } from './auth';
 import { Pan123Client } from './client';
 
@@ -34,34 +35,41 @@ export default function Pan123Options() {
   const checking = status.kind === 'checking';
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor={folderId}>保存到文件夹</Label>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={folderId} className="shrink-0 text-xs font-normal text-muted-foreground">
+          文件夹
+        </Label>
         <Input
           id={folderId}
-          placeholder="留空为根目录"
+          placeholder="根目录"
+          className="h-7 w-36 bg-background px-2 text-xs md:text-xs"
           value={folder}
           onChange={(e) => setFolder(e.target.value)}
           onBlur={() => pan123FolderItem.setValue(folder.trim())}
         />
       </div>
-      <div className="flex items-center justify-between gap-2 text-sm">
-        <span className={status.kind === 'error' ? 'text-destructive' : 'text-muted-foreground'}>
-          {checking && '检测中…'}
-          {status.kind === 'ok' && `已登录${status.name ? `：${status.name}` : ''}`}
-          {status.kind === 'error' && status.message}
-          {status.kind === 'loggedOut' && (
-            <>
-              未登录，
-              <a className="text-foreground underline underline-offset-4" href={PAN123_HOME} target="_blank" rel="noreferrer">
-                打开 123云盘登录
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={cn(
+              'size-1.5 shrink-0 rounded-full',
+              status.kind === 'ok' ? 'bg-emerald-500' : status.kind === 'checking' ? 'bg-neutral-400' : 'bg-rose-500',
+            )}
+          />
+          <span className={cn('truncate', status.kind === 'error' ? 'text-destructive' : 'text-muted-foreground')} title={status.kind === 'error' ? status.message : undefined}>
+            {checking && '检测中…'}
+            {status.kind === 'ok' && (status.name || '已登录')}
+            {status.kind === 'error' && status.message}
+            {status.kind === 'loggedOut' && (
+              <a className="text-foreground underline underline-offset-2" href={PAN123_HOME} target="_blank" rel="noreferrer">
+                未登录，去登录
               </a>
-            </>
-          )}
+            )}
+          </span>
         </span>
-        <Button variant="outline" size="sm" onClick={check} disabled={checking}>
+        <Button variant="ghost" size="icon-xs" onClick={check} disabled={checking} title="重新检测" aria-label="重新检测登录状态">
           {checking ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-          检测
         </Button>
       </div>
     </div>

@@ -3,7 +3,6 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     // Repeated from .wxt/tsconfig.json so the shadcn CLI resolves "@/..." relative to the project root.
     "paths": {
       "@": ["."],
