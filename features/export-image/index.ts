@@ -158,10 +158,67 @@ async function exportImage(format: ExportFormat, info: Browser.contextMenus.OnCl
   }
 }
 
+/** Runs in the page: puts only PNG bytes on the clipboard (no HTML `<img src>` pointing at the source site). */
+async function writePngToClipboard(base64: string): Promise<string | null> {
+  try {
+    if (!window.isSecureContext || !navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return 'insecure';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([bytes], { type: 'image/png' }) })]);
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+/**
+ * The browser's own "Copy image" also puts `<img src="https://…">` on the clipboard, and many editors
+ * paste that link instead of the bitmap. Links to Gemini/ChatGPT images need login, expire, or are
+ * unreachable from mainland China, so the pasted image fails to load. Copying only the PNG makes
+ * editors upload the image itself.
+ */
+async function copyImage(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<void> {
+  try {
+    if (tab?.id == null) throw new Error('找不到当前标签页');
+    const settings = await getExportImageSettings();
+    const candidates = await resolveCandidates(info, tab);
+    if (!candidates.length) throw new Error('此处未找到图片');
+    const image = await loadFirstImage(candidates, tab.id, info.frameId);
+    // Browsers only accept PNG for clipboard images.
+    const blob = await convert(image, 'png', { quality: settings.quality, background: settings.jpegBackground });
+    const base64 = arrayBufferToDataUrl(await blob.arrayBuffer(), 'image/png').split(',')[1]!;
+
+    // The clipboard needs a focused document: try the clicked frame, then the top frame.
+    let error: string | null = 'unknown';
+    for (const frameId of [...new Set([info.frameId ?? 0, 0])]) {
+      try {
+        const [result] = await browser.scripting.executeScript({
+          target: { tabId: tab.id, frameIds: [frameId] },
+          args: [base64],
+          func: writePngToClipboard,
+        });
+        error = (result?.result as string | null | undefined) ?? null;
+      } catch (err) {
+        error = err instanceof Error ? err.message : String(err);
+      }
+      if (!error || error === 'insecure') break;
+    }
+    if (error === 'insecure') throw new Error('非 HTTPS 页面不允许写入图片到剪贴板，请改用「导出图片」');
+    if (error) throw new Error(/focus/i.test(error) ? '页面未获得焦点，请先点击一下页面再试' : `写入剪贴板失败：${error}`);
+    await notify('已复制图片', '可以直接粘贴到网页编辑器、聊天软件等');
+  } catch (err) {
+    await notify('复制图片失败', err instanceof Error ? err.message : String(err));
+    console.error('[export-image] copy', err);
+  }
+}
+
 export const exportImageFeature: Feature = {
   id: 'export-image',
-  name: '导出图片',
-  description: '右键网页图片、背景图或视频封面（YouTube 自动取最高清封面），按原格式 / PNG / JPG / WebP 导出',
+  name: '导出 / 复制图片',
+  description:
+    '右键网页图片、背景图或视频封面（YouTube 自动取最高清封面），按原格式 / PNG / JPG / WebP 导出；' +
+    '或复制为纯图片，粘贴到国内网站编辑器不再「图片加载失败」',
   contextMenus: [
     { id: 'export', title: '导出图片', contexts: CONTEXTS },
     ...FORMATS.map<FeatureContextMenu>((format) => ({
@@ -171,5 +228,6 @@ export const exportImageFeature: Feature = {
       contexts: CONTEXTS,
       onClick: (info, tab) => exportImage(format.id, info, tab),
     })),
+    { id: 'copy', title: '复制图片（可粘贴到任意网站）', contexts: CONTEXTS, onClick: copyImage },
   ],
 };

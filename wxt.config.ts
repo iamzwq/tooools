@@ -17,6 +17,8 @@ export default defineConfig({
       'scripting',
       'declarativeNetRequestWithHostAccess',
       'downloads',
+      // Write only the image bitmap to the clipboard (「复制图片」).
+      'clipboardWrite',
       // Chrome MV3 service workers can't decode SVG; Firefox background pages have a DOM.
       ...(browser === 'firefox' ? [] : ['offscreen']),
     ],
