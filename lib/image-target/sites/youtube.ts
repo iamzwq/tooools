@@ -1,3 +1,4 @@
+import { closestDeep, parentOf } from '@/lib/dom';
 import type { ImageCandidate } from '../messages';
 import type { SiteResolver } from './index';
 
@@ -38,19 +39,6 @@ function matchId(value: string | null): string | null {
   return value && new RegExp(`^${ID}$`).test(value) ? value : null;
 }
 
-function parentAcrossShadow(el: Element): Element | null {
-  if (el.parentElement) return el.parentElement;
-  const root = el.getRootNode();
-  return root instanceof ShadowRoot ? root.host : null;
-}
-
-function closestDeep(el: Element, selector: string): Element | null {
-  for (let node: Element | null = el; node; node = parentAcrossShadow(node)) {
-    if (node.matches(selector)) return node;
-  }
-  return null;
-}
-
 function textOf(el: Element | null | undefined): string {
   return (el?.getAttribute('title') || el?.textContent || '').trim();
 }
@@ -68,7 +56,7 @@ function pageTitle(): string {
 
 /** Finds the video the element belongs to: a thumbnail link, a thumbnail image, or the player. */
 function findVideo(el: Element): { id: string; title: string } | null {
-  for (let node: Element | null = el; node; node = parentAcrossShadow(node)) {
+  for (let node: Element | null = el; node; node = parentOf(node)) {
     if (node instanceof HTMLAnchorElement && node.href) {
       const id = videoIdFromUrl(node.href);
       if (id) return { id, title: cardTitle(node) };

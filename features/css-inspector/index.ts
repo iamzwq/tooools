@@ -1,17 +1,15 @@
-import { browser } from 'wxt/browser';
 import type { Feature } from '@/features/types';
+import { arrayBufferToDataUrl, fetchImage } from '@/lib/image';
+import { onMessage } from '@/utils/messaging';
 import { CSS_INSPECTOR_COMMAND, CSS_INSPECTOR_FETCH_IMAGE, type FetchImageMessage } from './messages';
 import { startCssInspector } from './start';
 
+/** For element screenshots: fetches images/fonts the page can't load cross-origin. */
 async function fetchAsDataUrl(url: string): Promise<string | null> {
+  if (!/^https?:/i.test(url)) return null;
   try {
-    const res = await fetch(url, { credentials: 'include' });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    let binary = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    return `data:${blob.type || 'application/octet-stream'};base64,${btoa(binary)}`;
+    const { data, mimeType } = await fetchImage(url);
+    return arrayBufferToDataUrl(data, mimeType);
   } catch {
     return null;
   }
@@ -40,11 +38,6 @@ export const cssInspector: Feature = {
     },
   ],
   setupBackground() {
-    browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-      const msg = message as Partial<FetchImageMessage> | null;
-      if (msg?.type !== CSS_INSPECTOR_FETCH_IMAGE || typeof msg.url !== 'string' || !/^https?:/i.test(msg.url)) return;
-      void fetchAsDataUrl(msg.url).then(sendResponse);
-      return true;
-    });
+    onMessage<FetchImageMessage, string | null>(CSS_INSPECTOR_FETCH_IMAGE, ({ url }) => fetchAsDataUrl(String(url)));
   },
 };

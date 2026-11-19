@@ -1,15 +1,16 @@
-import { browser } from 'wxt/browser';
+import { browser, type Browser } from 'wxt/browser';
 import type { Feature } from '@/features/types';
+import { getImageAt, IMAGE_CONTEXTS, imageFileName } from '@/lib/image-target';
 import { notify } from '@/utils/notify';
 import { getPan123Auth, pan123FolderItem, PAN123_HOME } from './auth';
 import { Pan123AuthError, Pan123Client } from './client';
-import { buildFileName, fetchImage } from '@/lib/image';
 
 const folderIdCache = new Map<string, number>();
 
-async function saveImage(srcUrl: string, tabId?: number, frameId?: number): Promise<void> {
+async function saveImage(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<void> {
   const notifyId = await notify('保存到 123云盘', '正在保存图片…');
   try {
+    const image = await getImageAt(info, tab);
     const auth = await getPan123Auth();
     if (!auth) {
       await notify('保存到 123云盘', '未检测到登录信息，请先打开 123云盘网页并登录', notifyId);
@@ -26,8 +27,7 @@ async function saveImage(srcUrl: string, tabId?: number, frameId?: number): Prom
       folderIdCache.set(cacheKey, parentId);
     }
 
-    const image = await fetchImage(srcUrl, tabId, frameId);
-    const fileName = buildFileName(srcUrl, image.mimeType);
+    const fileName = imageFileName(image.candidate, image.mimeType);
     const { reused } = await client.uploadFile(parentId, fileName, image.data);
 
     const where = folderName ? `「${folderName}」` : '根目录';
@@ -44,15 +44,13 @@ async function saveImage(srcUrl: string, tabId?: number, frameId?: number): Prom
 export const saveImageTo123Pan: Feature = {
   id: 'save-image-to-123pan',
   name: '图片保存到 123云盘',
-  description: '在网页图片上右击，一键保存到 123云盘（使用浏览器中已登录的账号）',
+  description: '在网页图片、背景图或视频封面上右击，一键保存到 123云盘（使用浏览器中已登录的账号）',
   contextMenus: [
     {
       id: 'save',
       title: '保存图片到 123云盘',
-      contexts: ['image'],
-      onClick: (info, tab) => {
-        if (info.srcUrl) return saveImage(info.srcUrl, tab?.id, info.frameId);
-      },
+      contexts: IMAGE_CONTEXTS,
+      onClick: saveImage,
     },
   ],
 };

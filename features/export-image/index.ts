@@ -1,26 +1,15 @@
 import { browser, type Browser } from 'wxt/browser';
-import type { Feature, FeatureContextMenu, MenuContext } from '@/features/types';
-import {
-  arrayBufferToDataUrl,
-  buildFileName,
-  extForMime,
-  fetchImage,
-  replaceExtension,
-  sanitizeFileName,
-  sniffImageMime,
-} from '@/lib/image';
+import type { Feature, FeatureContextMenu } from '@/features/types';
+import { arrayBufferToDataUrl, extForMime, IMAGE_CLIPBOARD_UNSUPPORTED, replaceExtension } from '@/lib/image';
+import { getImageAt, IMAGE_CONTEXTS, imageFileName, type LoadedImage } from '@/lib/image-target';
 import { notify } from '@/utils/notify';
 import { convertRaster, convertSvg, MIME_BY_FORMAT, type EncodeOptions } from './convert';
 import {
   EXPORT_IMAGE_RASTERIZE,
-  EXPORT_IMAGE_RESOLVE,
   type EncodeFormat,
   type ExportFormat,
-  type ImageCandidate,
   type RasterizeMessage,
   type RasterizeResponse,
-  type ResolveMessage,
-  type ResolveResponse,
 } from './messages';
 import { getExportImageSettings } from './settings';
 
@@ -30,49 +19,6 @@ const FORMATS: { id: ExportFormat; title: string }[] = [
   { id: 'jpeg', title: 'JPG' },
   { id: 'webp', title: 'WebP' },
 ];
-
-// Not only "image": video thumbnails are usually covered by links/overlays, so the browser
-// reports "link" or "page" there; the content script then finds the image under the cursor.
-const CONTEXTS: [MenuContext, ...MenuContext[]] = ['image', 'video', 'link', 'page', 'frame'];
-
-async function resolveCandidates(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<ImageCandidate[]> {
-  // For video, srcUrl is the video stream, not an image.
-  const srcUrl = info.mediaType === 'image' ? info.srcUrl : undefined;
-  if (tab?.id != null) {
-    try {
-      const message: ResolveMessage = { type: EXPORT_IMAGE_RESOLVE, srcUrl };
-      const res = (await browser.tabs.sendMessage(tab.id, message, { frameId: info.frameId ?? 0 })) as ResolveResponse | undefined;
-      if (res?.candidates) return res.candidates;
-    } catch {
-      // Content script missing (tab opened before the extension was installed/updated).
-    }
-  }
-  if (srcUrl) return [{ url: srcUrl }];
-  throw new Error(tab?.id != null ? '此处未找到图片（如果页面在安装扩展前打开，请刷新后重试）' : '此处未找到图片');
-}
-
-interface LoadedImage {
-  candidate: ImageCandidate;
-  data: ArrayBuffer;
-  mimeType: string;
-}
-
-/** Downloads the first candidate that is a real image (later candidates are smaller fallbacks). */
-async function loadFirstImage(candidates: ImageCandidate[], tabId?: number, frameId?: number): Promise<LoadedImage> {
-  let lastError: unknown;
-  for (const candidate of candidates) {
-    try {
-      const { data, mimeType } = await fetchImage(candidate.url, tabId, frameId);
-      const sniffed = sniffImageMime(data, mimeType.startsWith('image/') ? mimeType : '');
-      if (!sniffed) throw new Error('不是图片');
-      return { candidate, data, mimeType: sniffed };
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  const reason = lastError instanceof Error ? `：${lastError.message}` : '';
-  throw new Error(`图片下载失败${reason}`);
-}
 
 let creatingOffscreen: Promise<void> | undefined;
 
@@ -121,15 +67,6 @@ async function convert(image: LoadedImage, format: ExportFormat, options: Encode
   return convertRaster(original, format, options);
 }
 
-function exportFileName(candidate: ImageCandidate, sourceMime: string, outputMime: string): string {
-  const ext = extForMime(outputMime) ?? 'png';
-  if (candidate.fileName) {
-    const base = sanitizeFileName(candidate.fileName);
-    if (base) return `${base}.${ext}`;
-  }
-  return replaceExtension(buildFileName(candidate.url, sourceMime), ext);
-}
-
 async function saveBlob(blob: Blob, filename: string, saveAs: boolean): Promise<void> {
   // Service workers (Chrome MV3) have no URL.createObjectURL; Firefox background pages do.
   const useBlobUrl = typeof URL.createObjectURL === 'function';
@@ -144,11 +81,9 @@ async function saveBlob(blob: Blob, filename: string, saveAs: boolean): Promise<
 async function exportImage(format: ExportFormat, info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<void> {
   try {
     const settings = await getExportImageSettings();
-    const candidates = await resolveCandidates(info, tab);
-    if (!candidates.length) throw new Error('此处未找到图片');
-    const image = await loadFirstImage(candidates, tab?.id, info.frameId);
+    const image = await getImageAt(info, tab);
     const blob = await convert(image, format, { quality: settings.quality, background: settings.jpegBackground });
-    const filename = exportFileName(image.candidate, image.mimeType, blob.type);
+    const filename = replaceExtension(imageFileName(image.candidate, image.mimeType), extForMime(blob.type) ?? 'png');
     await saveBlob(blob, filename, settings.saveAs);
   } catch (err) {
     // The user closing the "Save as" dialog is not an error.
@@ -158,7 +93,10 @@ async function exportImage(format: ExportFormat, info: Browser.contextMenus.OnCl
   }
 }
 
-/** Runs in the page: puts only PNG bytes on the clipboard (no HTML `<img src>` pointing at the source site). */
+/**
+ * Runs in the page, so it must be self-contained. Puts only PNG bytes on the clipboard (no HTML
+ * `<img src>` pointing at the source site).
+ */
 async function writePngToClipboard(base64: string): Promise<string | null> {
   try {
     if (!window.isSecureContext || !navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return 'insecure';
@@ -182,9 +120,7 @@ async function copyImage(info: Browser.contextMenus.OnClickData, tab?: Browser.t
   try {
     if (tab?.id == null) throw new Error('找不到当前标签页');
     const settings = await getExportImageSettings();
-    const candidates = await resolveCandidates(info, tab);
-    if (!candidates.length) throw new Error('此处未找到图片');
-    const image = await loadFirstImage(candidates, tab.id, info.frameId);
+    const image = await getImageAt(info, tab);
     // Browsers only accept PNG for clipboard images.
     const blob = await convert(image, 'png', { quality: settings.quality, background: settings.jpegBackground });
     const base64 = arrayBufferToDataUrl(await blob.arrayBuffer(), 'image/png').split(',')[1]!;
@@ -204,7 +140,7 @@ async function copyImage(info: Browser.contextMenus.OnClickData, tab?: Browser.t
       }
       if (!error || error === 'insecure') break;
     }
-    if (error === 'insecure') throw new Error('非 HTTPS 页面不允许写入图片到剪贴板，请改用「导出图片」');
+    if (error === 'insecure') throw new Error(IMAGE_CLIPBOARD_UNSUPPORTED);
     if (error) throw new Error(/focus/i.test(error) ? '页面未获得焦点，请先点击一下页面再试' : `写入剪贴板失败：${error}`);
     await notify('已复制图片', '可以直接粘贴到网页编辑器、聊天软件等');
   } catch (err) {
@@ -220,14 +156,14 @@ export const exportImageFeature: Feature = {
     '右键网页图片、背景图或视频封面（YouTube 自动取最高清封面），按原格式 / PNG / JPG / WebP 导出；' +
     '或复制为纯图片，粘贴到国内网站编辑器不再「图片加载失败」',
   contextMenus: [
-    { id: 'export', title: '导出图片', contexts: CONTEXTS },
+    { id: 'export', title: '导出图片', contexts: IMAGE_CONTEXTS },
     ...FORMATS.map<FeatureContextMenu>((format) => ({
       id: format.id,
       parentId: 'export',
       title: format.title,
-      contexts: CONTEXTS,
+      contexts: IMAGE_CONTEXTS,
       onClick: (info, tab) => exportImage(format.id, info, tab),
     })),
-    { id: 'copy', title: '复制图片（可粘贴到任意网站）', contexts: CONTEXTS, onClick: copyImage },
+    { id: 'copy', title: '复制图片（可粘贴到任意网站）', contexts: IMAGE_CONTEXTS, onClick: copyImage },
   ],
 };

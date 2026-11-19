@@ -1,9 +1,9 @@
 import '@/assets/content-ui.css';
 import ReactDOM from 'react-dom/client';
-import { browser } from 'wxt/browser';
 import { createShadowRootUi, type ShadowRootContentScriptUi } from 'wxt/utils/content-script-ui/shadow-root';
 import Inspector from '@/features/css-inspector/Inspector';
 import { CSS_INSPECTOR_START } from '@/features/css-inspector/messages';
+import { onMessage } from '@/utils/messaging';
 
 /** Injected on demand by `startCssInspector()`; stays loaded so later starts are just a message. */
 export default defineContentScript({
@@ -41,11 +41,10 @@ export default defineContentScript({
       ui.mount();
     };
 
-    browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
-      if ((message as { type?: string } | null)?.type !== CSS_INSPECTOR_START) return;
+    // Replying `true` tells startCssInspector() this script is already loaded.
+    onMessage<{ type: typeof CSS_INSPECTOR_START }, true>(CSS_INSPECTOR_START, () => {
       void start();
-      // Tells startCssInspector() this script is loaded (other content scripts may also listen).
-      sendResponse(true);
+      return true;
     });
     await start();
   },

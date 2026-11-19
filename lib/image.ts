@@ -20,18 +20,21 @@ const EXT_BY_MIME: Record<string, string> = {
 };
 
 /**
- * Downloads the image from the extension first (bypasses CORS via host permissions);
- * falls back to fetching inside the page, which handles blob: URLs and session-bound images.
+ * Downloads the image from the extension first (bypasses CORS via host permissions); falls back to
+ * fetching inside the page only where that can help: blob: URLs, network errors and 401/403
+ * (session-bound images). A 404 from the extension would be a 404 in the page too.
  */
 export async function fetchImage(srcUrl: string, tabId?: number, frameId?: number): Promise<FetchedImage> {
   if (!srcUrl.startsWith('blob:')) {
+    let res: Response | undefined;
     try {
-      const res = await fetch(srcUrl, { credentials: 'include' });
-      if (res.ok) {
-        return { data: await res.arrayBuffer(), mimeType: cleanMime(res.headers.get('content-type')) };
-      }
+      res = await fetch(srcUrl, { credentials: 'include' });
     } catch {
-      // fall through to page-context fetch
+      // Network error: retry from the page.
+    }
+    if (res?.ok) return { data: await res.arrayBuffer(), mimeType: cleanMime(res.headers.get('content-type')) };
+    if (res && (tabId == null || (res.status !== 401 && res.status !== 403))) {
+      throw new Error(`无法下载图片: HTTP ${res.status}`);
     }
   }
   if (tabId == null) throw new Error('无法下载图片');
@@ -39,6 +42,7 @@ export async function fetchImage(srcUrl: string, tabId?: number, frameId?: numbe
   const [result] = await browser.scripting.executeScript({
     target: { tabId, frameIds: [frameId ?? 0] },
     args: [srcUrl],
+    // Runs in the page, so it must be self-contained (can't call blobToDataUrl).
     func: async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) return { error: `HTTP ${res.status}` };
@@ -87,13 +91,13 @@ export function replaceExtension(fileName: string, ext: string): string {
 }
 
 /** Strips characters that are invalid in file names on Windows/macOS/Linux and in chrome.downloads. */
-export function sanitizeFileName(name: string): string {
-  return name
-    .replace(/[\\/:*?"<>|~\x00-\x1f]/g, '_')
-    .replace(/\s+/g, ' ')
-    .replace(/^[\s.]+|[\s.]+$/g, '')
-    .slice(0, 150);
+export function sanitizeFileName(name: string, maxLength = 150): string {
+  const cleaned = name.replace(/[\\/:*?"<>|~\x00-\x1f]/g, '_').replace(/\s+/g, ' ');
+  // Truncate by code points so emoji aren't cut in half.
+  return Array.from(cleaned).slice(0, maxLength).join('').replace(/^[\s.]+|[\s.]+$/g, '');
 }
+
+export const IMAGE_CLIPBOARD_UNSUPPORTED = '非 HTTPS 页面不允许写入图片到剪贴板，请改用「导出图片」';
 
 export function arrayBufferToDataUrl(data: ArrayBuffer, mimeType: string): string {
   const bytes = new Uint8Array(data);
@@ -102,29 +106,32 @@ export function arrayBufferToDataUrl(data: ArrayBuffer, mimeType: string): strin
   return `data:${mimeType || 'application/octet-stream'};base64,${btoa(binary)}`;
 }
 
-/** Builds a safe file name from the image URL, making sure it has a matching extension. */
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Builds a safe file name from the image URL, with an extension matching the actual type. */
 export function buildFileName(srcUrl: string, mimeType: string, now = new Date()): string {
   let base = '';
   if (/^https?:/i.test(srcUrl)) {
     try {
-      const segment = new URL(srcUrl).pathname.split('/').filter(Boolean).pop() ?? '';
-      base = decodeURIComponent(segment);
+      base = decodeURIComponent(new URL(srcUrl).pathname.split('/').filter(Boolean).pop() ?? '');
     } catch {
       base = '';
     }
   }
-  base = base.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').trim();
-
   const mimeExt = EXT_BY_MIME[mimeType];
   const match = base.match(/\.([a-z0-9]{2,5})$/i);
-  if (!base) {
-    const stamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    base = `image_${stamp}`;
-  } else if (match?.[1] && mimeExt && !sameExt(match[1], mimeExt)) {
-    base = base.slice(0, -match[0].length);
-  }
-  if (!/\.[a-z0-9]{2,5}$/i.test(base)) base += `.${mimeExt ?? 'jpg'}`;
-  return base.slice(-200);
+  if (match) base = base.slice(0, -match[0].length);
+  // Trust the URL's extension unless the real type says otherwise (e.g. `a.php` serving a JPEG).
+  const ext = match?.[1] && (!mimeExt || sameExt(match[1], mimeExt)) ? match[1] : (mimeExt ?? 'jpg');
+  base = sanitizeFileName(base) || `image_${now.toISOString().replace(/[-:T]/g, '').slice(0, 14)}`;
+  return `${base}.${ext}`;
 }
 
 function sameExt(a: string, b: string): boolean {

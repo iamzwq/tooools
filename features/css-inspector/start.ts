@@ -4,7 +4,7 @@ import { CSS_INSPECTOR_START } from './messages';
 /** Starts pick mode in the tab, injecting the content script on first use. */
 export async function startCssInspector(tabId: number): Promise<void> {
   try {
-    // Other content scripts (e.g. image-export) also listen, so only an explicit `true` means it's loaded.
+    // Other content scripts (e.g. image-target) also listen, so only an explicit `true` means it's loaded.
     const loaded = await browser.tabs.sendMessage(tabId, { type: CSS_INSPECTOR_START }, { frameId: 0 });
     if (loaded === true) return;
   } catch {

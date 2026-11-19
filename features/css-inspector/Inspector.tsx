@@ -2,8 +2,9 @@ import { Fragment, useEffect, useRef, useState, type PointerEvent as ReactPointe
 import { ArrowDown, ArrowUp, Check, Copy, ImageDown, Images, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
+import { parentOf } from '@/lib/dom';
 import { BaselineStyles, elementLabel, extractRule, formatRule, type ExtractedRule } from './extract-css';
-import { copyElementImage, exportElementImage, imageFileName } from './export-image';
+import { copyElementImage, elementImageFileName, exportElementImage } from './render-element';
 
 interface Props {
   /** Shadow host of this UI; events coming from it are ours and must not be intercepted. */
@@ -41,13 +42,6 @@ const sameBox = (a: Box | null, b: Box | null) =>
 /** First child that is actually rendered (skips <script>, <style>, hidden nodes, ...). */
 const firstVisibleChild = (children: Iterable<Element>): Element | null =>
   [...children].find((c) => c.getClientRects().length > 0) ?? null;
-
-/** Parent element, stepping out of (open) shadow roots of web components. */
-function parentOf(el: Element): Element | null {
-  if (el.parentElement) return el.parentElement;
-  const root = el.getRootNode();
-  return root instanceof ShadowRoot ? root.host : null;
-}
 
 function childOf(el: Element, upTrail: Element[]): Element | null {
   const last = upTrail.at(-1);
@@ -233,7 +227,7 @@ export default function Inspector({ host, onExit }: Props) {
 
   const exportImage = () => {
     if (!selection || imageTask) return;
-    void runImageTask('export', exportElementImage(selection.el, host, imageFileName(selection.label)));
+    void runImageTask('export', exportElementImage(selection.el, host, elementImageFileName(selection.label)));
   };
 
   // Clipboard writes need the click's user activation, so start the write synchronously.

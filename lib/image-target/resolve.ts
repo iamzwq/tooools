@@ -1,3 +1,4 @@
+import { blobToDataUrl } from '@/lib/image';
 import type { ImageCandidate } from './messages';
 import { siteResolvers } from './sites';
 
@@ -23,17 +24,21 @@ function absUrl(url: string): string | null {
 
 /** Parses a srcset into URLs ordered from largest to smallest. */
 export function srcsetUrls(srcset: string): string[] {
-  return srcset
-    .split(/,\s+(?=\S)/)
-    .map((part) => {
-      const [url = '', descriptor = '1x'] = part.trim().split(/\s+/);
-      const n = parseFloat(descriptor);
-      // Treat "w" and "x" descriptors on comparable scales; a srcset uses only one kind.
-      return { url, size: Number.isFinite(n) ? n : 1 };
-    })
-    .filter((c) => c.url)
-    .sort((a, b) => b.size - a.size)
-    .map((c) => c.url);
+  return (
+    srcset
+      // Candidates are separated by commas; minified HTML omits the space after them. A comma
+      // inside a URL (e.g. `w_400,h_200`) is neither after a descriptor nor followed by a space.
+      .split(/(?<=\s\d+(?:\.\d+)?[wx])\s*,\s*|,\s+/)
+      .map((part) => {
+        const [url = '', descriptor = '1x'] = part.trim().split(/\s+/);
+        const n = parseFloat(descriptor);
+        // Treat "w" and "x" descriptors on comparable scales; a srcset uses only one kind.
+        return { url, size: Number.isFinite(n) ? n : 1 };
+      })
+      .filter((c) => c.url)
+      .sort((a, b) => b.size - a.size)
+      .map((c) => c.url)
+  );
 }
 
 function imgUrls(img: HTMLImageElement): string[] {
@@ -148,15 +153,9 @@ function rank(found: Found[]): string[] {
   return [...big, ...small, ...found.filter((f) => f.backdrop)].flatMap((f) => f.urls);
 }
 
-async function blobToDataUrl(url: string): Promise<string | null> {
+async function readBlobUrl(url: string): Promise<string | null> {
   try {
-    const blob = await (await fetch(url)).blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(blob);
-    });
+    return await blobToDataUrl(await (await fetch(url)).blob());
   } catch {
     return null;
   }
@@ -200,7 +199,7 @@ export async function resolveImages(click: ClickTarget | null, srcUrl?: string):
   const candidates: ImageCandidate[] = [];
   for (const url of new Set(urls.map((u) => absUrl(u)).filter((u): u is string => !!u))) {
     // Blob URLs are only readable inside the page.
-    const resolved = url.startsWith('blob:') ? await blobToDataUrl(url) : url;
+    const resolved = url.startsWith('blob:') ? await readBlobUrl(url) : url;
     if (resolved) candidates.push({ url: resolved });
   }
   return candidates;

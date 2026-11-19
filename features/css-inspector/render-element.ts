@@ -1,5 +1,7 @@
 import { domToCanvas } from 'modern-screenshot';
 import { browser } from 'wxt/browser';
+import { parentOf } from '@/lib/dom';
+import { IMAGE_CLIPBOARD_UNSUPPORTED } from '@/lib/image';
 import { CSS_INSPECTOR_FETCH_IMAGE, type FetchImageMessage } from './messages';
 
 // Stay well inside browser canvas limits (max side ~32k, max area ~268M px).
@@ -18,7 +20,7 @@ async function fetchImageViaBackground(url: string): Promise<string | false> {
   }
 }
 
-export function imageFileName(label: string, now = new Date()): string {
+export function elementImageFileName(label: string, now = new Date()): string {
   const base = label.replace(/[^\w.#-]+/g, '_').replace(/#/g, '_').slice(0, 60) || 'element';
   const stamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14);
   return `${base}-${stamp}.png`;
@@ -70,12 +72,6 @@ function toRgba(color: string): Rgba {
   return [r, g, b, a / 255];
 }
 
-function parentOf(el: Element): Element | null {
-  if (el.parentElement) return el.parentElement;
-  const root = el.getRootNode();
-  return root instanceof ShadowRoot ? root.host : null;
-}
-
 /** The browser's default canvas: white, or dark when the page opts into a dark color scheme. */
 function canvasColor(): Rgba {
   const scheme = getComputedStyle(document.documentElement).colorScheme;
@@ -125,7 +121,7 @@ export async function exportElementImage(el: Element, exclude: Node, fileName: s
  */
 export function copyElementImage(el: Element, exclude: Node): Promise<void> {
   if (!window.isSecureContext || !navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
-    return Promise.reject(new Error('非 HTTPS 页面不允许写入图片到剪贴板，请改用「导出图片」'));
+    return Promise.reject(new Error(IMAGE_CLIPBOARD_UNSUPPORTED));
   }
   return navigator.clipboard.write([new ClipboardItem({ 'image/png': renderElementPng(el, exclude) })]);
 }

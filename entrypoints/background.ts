@@ -32,7 +32,13 @@ function rebuildMenus(): Promise<void> {
 }
 
 export default defineBackground(() => {
+  const declaredCommands = browser.runtime.getManifest().commands ?? {};
   for (const feature of features) {
+    for (const command of feature.commands ?? []) {
+      if (!(command.name in declaredCommands)) {
+        console.warn(`[tooools] ${feature.id}: command "${command.name}" is missing from manifest.commands in wxt.config.ts`);
+      }
+    }
     try {
       feature.setupBackground?.();
     } catch (err) {
