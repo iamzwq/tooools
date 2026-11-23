@@ -1,18 +1,10 @@
-import { useEffect, useState } from 'react';
 import { MousePointerClick } from 'lucide-react';
 import { browser } from 'wxt/browser';
+import { ShortcutRow } from '@/components/ShortcutRow';
 import { Button } from '@/components/ui/button';
 import { notify } from '@/utils/notify';
 import { CSS_INSPECTOR_COMMAND } from './messages';
 import { startCssInspector } from './start';
-
-/** The browser's own page for rebinding extension shortcuts (extensions can't change them in Chrome). */
-async function openShortcutSettings(): Promise<void> {
-  const commands = browser.commands as typeof browser.commands & { openShortcutSettings?: () => Promise<void> };
-  if (commands.openShortcutSettings) return commands.openShortcutSettings();
-  const url = navigator.userAgent.includes('Edg/') ? 'edge://extensions/shortcuts' : 'chrome://extensions/shortcuts';
-  await browser.tabs.create({ url });
-}
 
 /** Row button: start picking an element on the current tab. */
 export function CssInspectorAction() {
@@ -35,27 +27,5 @@ export function CssInspectorAction() {
 }
 
 export default function CssInspectorOptions() {
-  const [shortcut, setShortcut] = useState<string | null>(null);
-
-  useEffect(() => {
-    void browser.commands.getAll().then((all) => {
-      setShortcut(all.find((c) => c.name === CSS_INSPECTOR_COMMAND)?.shortcut ?? '');
-    });
-  }, []);
-
-  if (shortcut === null) return null;
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground">快捷键</span>
-      <button
-        type="button"
-        className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-foreground hover:bg-accent"
-        onClick={() => void openShortcutSettings().then(() => window.close())}
-        title="在浏览器快捷键设置中修改"
-      >
-        {shortcut || '未设置'}
-      </button>
-    </div>
-  );
+  return <ShortcutRow command={CSS_INSPECTOR_COMMAND} />;
 }

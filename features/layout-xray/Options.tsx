@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Scan } from 'lucide-react';
 import { browser } from 'wxt/browser';
+import { ShortcutRow } from '@/components/ShortcutRow';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { cn } from '@/lib/utils';
@@ -14,13 +15,6 @@ const MODES: { value: LayoutXrayMode; label: string }[] = [
   { value: 'tint', label: '填色' },
   { value: 'both', label: '混合' },
 ];
-
-async function openShortcutSettings(): Promise<void> {
-  const commands = browser.commands as typeof browser.commands & { openShortcutSettings?: () => Promise<void> };
-  if (commands.openShortcutSettings) return commands.openShortcutSettings();
-  const url = navigator.userAgent.includes('Edg/') ? 'edge://extensions/shortcuts' : 'chrome://extensions/shortcuts';
-  await browser.tabs.create({ url });
-}
 
 /** Row button: toggle layout X-ray on the current tab. */
 export function LayoutXrayAction() {
@@ -60,13 +54,9 @@ export function LayoutXrayAction() {
 
 export default function LayoutXrayOptions() {
   const [mode, setMode] = useState<LayoutXrayMode | null>(null);
-  const [shortcut, setShortcut] = useState<string | null>(null);
 
   useEffect(() => {
     void getLayoutXraySettings().then((s) => setMode(s.mode));
-    void browser.commands.getAll().then((all) => {
-      setShortcut(all.find((c) => c.name === LAYOUT_XRAY_COMMAND)?.shortcut ?? '');
-    });
   }, []);
 
   if (!mode) return null;
@@ -96,19 +86,7 @@ export default function LayoutXrayOptions() {
           ))}
         </ButtonGroup>
       </div>
-      {shortcut !== null && (
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-muted-foreground">快捷键</span>
-          <button
-            type="button"
-            className="rounded-md border bg-background px-1.5 py-0.5 font-mono text-foreground hover:bg-accent"
-            onClick={() => void openShortcutSettings().then(() => window.close())}
-            title="在浏览器快捷键设置中修改"
-          >
-            {shortcut || '未设置'}
-          </button>
-        </div>
-      )}
+      <ShortcutRow command={LAYOUT_XRAY_COMMAND} />
     </div>
   );
 }

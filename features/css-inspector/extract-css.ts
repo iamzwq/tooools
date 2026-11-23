@@ -229,16 +229,6 @@ export function ruleSelector(el: Element): string {
   return el.localName;
 }
 
-/** Short DevTools-style label, e.g. `div#app.card.shadow`. */
-export function elementLabel(el: Element): string {
-  let label = el.localName;
-  if (el.id) label += `#${el.id}`;
-  const classes = [...el.classList];
-  label += classes.slice(0, 3).map((c) => `.${c}`).join('');
-  if (classes.length > 3) label += '…';
-  return label;
-}
-
 export function formatRule({ selector, declarations }: ExtractedRule): string {
   const body = declarations.map(([p, v]) => `  ${p}: ${v};`).join('\n');
   return `${selector} {\n${body}\n}`;

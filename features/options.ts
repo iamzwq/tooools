@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
-import { CloudUpload, CodeXml, ImageDown, Layers, type LucideIcon } from 'lucide-react';
+import { CloudUpload, CodeXml, Eraser, ImageDown, Layers, type LucideIcon } from 'lucide-react';
 import CssInspectorOptions, { CssInspectorAction } from './css-inspector/Options';
+import ElementEraserOptions, { ElementEraserAction } from './element-eraser/Options';
 import ExportImageOptions from './export-image/Options';
 import LayoutXrayOptions, { LayoutXrayAction } from './layout-xray/Options';
 import Pan123Options from './save-image-to-123pan/Options';
@@ -21,4 +22,5 @@ export const featurePopup: Partial<Record<string, FeaturePopup>> = {
   'save-image-to-123pan': { icon: CloudUpload, tile: 'bg-sky-500', Options: Pan123Options },
   'css-inspector': { icon: CodeXml, tile: 'bg-amber-500', Options: CssInspectorOptions, Action: CssInspectorAction },
   'layout-xray': { icon: Layers, tile: 'bg-emerald-500', Options: LayoutXrayOptions, Action: LayoutXrayAction },
+  'element-eraser': { icon: Eraser, tile: 'bg-rose-500', Options: ElementEraserOptions, Action: ElementEraserAction },
 };

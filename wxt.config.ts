@@ -1,6 +1,7 @@
 ﻿import { defineConfig } from 'wxt';
 import tailwindcss from '@tailwindcss/vite';
 import { CSS_INSPECTOR_COMMAND, CSS_INSPECTOR_DEFAULT_SHORTCUT } from './features/css-inspector/messages';
+import { ELEMENT_ERASER_COMMAND, ELEMENT_ERASER_DEFAULT_SHORTCUT } from './features/element-eraser/messages';
 import { LAYOUT_XRAY_COMMAND, LAYOUT_XRAY_DEFAULT_SHORTCUT } from './features/layout-xray/messages';
 
 // See https://wxt.dev/api/reference/wxt/interfaces/inlineconfig.html
@@ -35,6 +36,10 @@ export default defineConfig({
       [LAYOUT_XRAY_COMMAND]: {
         suggested_key: { default: LAYOUT_XRAY_DEFAULT_SHORTCUT },
         description: '布局透视：切换当前页布局高亮',
+      },
+      [ELEMENT_ERASER_COMMAND]: {
+        suggested_key: { default: ELEMENT_ERASER_DEFAULT_SHORTCUT },
+        description: '元素擦除：开始临时隐藏元素',
       },
     },
   }),

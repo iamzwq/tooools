@@ -12,3 +12,13 @@ export function closestDeep(el: Element, selector: string): Element | null {
   }
   return null;
 }
+
+/** Short DevTools-style label, e.g. `div#app.card.shadow`. */
+export function elementLabel(el: Element): string {
+  let label = el.localName;
+  if (el.id) label += `#${el.id}`;
+  const classes = [...el.classList];
+  label += classes.slice(0, 3).map((c) => `.${c}`).join('');
+  if (classes.length > 3) label += '…';
+  return label;
+}

@@ -16,7 +16,7 @@ export function buildLayoutXrayCss(mode: LayoutXrayMode): string {
   const rules: string[] = [];
   for (let level = 0; level < DEPTH; level++) {
     const color = PALETTE[level % PALETTE.length];
-    const selector = `body ${'* '.repeat(level)}*:not(tooools-css-inspector)`;
+    const selector = `body ${'* '.repeat(level)}*:not(tooools-css-inspector):not(tooools-element-eraser)`;
     const decls: string[] = [];
     if (mode === 'outline' || mode === 'both') {
       decls.push(`outline: 1px solid rgba(${color}, 0.85) !important;`, 'outline-offset: -1px !important;');
