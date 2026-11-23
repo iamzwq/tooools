@@ -4,6 +4,15 @@
 
 所有功能均可在扩展弹窗中**独立开关与配置**，关闭功能后对应的右键菜单与快捷键会自动停用。
 
+## 安装
+
+前往 [Releases](https://github.com/iamzwq/tooools/releases/latest) 下载最新版本的安装包：
+
+- **Chrome / Edge**：下载 `tooools-<版本>-chrome.zip` 并解压，打开扩展管理页（`chrome://extensions` 或 `edge://extensions`），开启「开发者模式」，点击「加载已解压的扩展程序」，选择解压后的文件夹。
+- **Firefox**：下载 `tooools-<版本>-firefox.zip`，打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」并选择该 zip 文件（未签名扩展在 Firefox 重启后需重新载入）。
+
+> 升级版本时，下载新包解压覆盖原文件夹后，在扩展管理页点击该扩展的「重新加载」即可，已有设置会保留。
+
 ## 已实现的功能
 
 ### 1. 导出 / 复制图片
@@ -107,6 +116,15 @@ npm run compile
 1. 运行 `npm run build`（Chrome / Edge）或 `npm run build:firefox`（Firefox）。
 2. 在浏览器打开扩展管理页（如 `chrome://extensions` 或 `edge://extensions`），开启「开发者模式」。
 3. 点击「加载已解压的扩展程序」，选择构建产物目录 `.output/chrome-mv3`。
+
+### 发布新版本
+
+推送 `v*` 格式的 tag 后，GitHub Actions（[`.github/workflows/release.yml`](.github/workflows/release.yml)）会自动类型检查、打包 Chrome / Firefox zip 并创建 GitHub Release。tag 必须与 `package.json` 中的版本号一致：
+
+```bash
+npm version 1.1.0 -m "chore: release v%s"   # 更新版本号、提交并创建 tag v1.1.0
+git push origin main --follow-tags
+```
 
 ## 项目结构
 

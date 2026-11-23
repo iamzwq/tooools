@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Check tag matches package.json version
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "$expected" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version ($expected)"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm run compile
+
+      - name: Build and zip
+        run: |
+          npm run zip
+          npm run zip:firefox
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          files: |
+            .output/*-chrome.zip
+            .output/*-firefox.zip
+          body: |
+            ## 安装
+
+            **Chrome / Edge**：下载 `tooools-*-chrome.zip` 并解压，打开 `chrome://extensions`（Edge 为 `edge://extensions`），开启「开发者模式」，点击「加载已解压的扩展程序」，选择解压后的文件夹。
+
+            **Firefox**：下载 `tooools-*-firefox.zip`，打开 `about:debugging#/runtime/this-firefox`，点击「临时载入附加组件」，选择该 zip 文件（未签名扩展在 Firefox 重启后需重新载入）。
