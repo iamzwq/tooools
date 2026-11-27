@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
 import { createShadowRootUi, type ShadowRootContentScriptUi } from 'wxt/utils/content-script-ui/shadow-root';
+import { loadContentScriptCss } from '@/utils/content-script-css';
 
 export interface OverlayController {
   start: () => Promise<void>;
@@ -34,6 +35,7 @@ export function createOverlayController(
       name: options.name,
       position: 'inline',
       anchor: 'html',
+      css: await loadContentScriptCss(),
       onMount(container, _shadow, host) {
         const wrapper = document.createElement('div');
         if (matchMedia('(prefers-color-scheme: dark)').matches) wrapper.classList.add('dark');

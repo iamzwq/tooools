@@ -6,6 +6,7 @@ import { getAssistantBridge } from '@/features/assistant/bridge';
 import { Assistant } from '@/features/assistant/ui/Assistant';
 import { parseVideoUrl } from '@/features/video-summary/sites';
 import { AssistantStore } from '@/features/video-summary/ui/store';
+import { loadContentScriptCss } from '@/utils/content-script-css';
 
 /** Our shadow root is open, so page scripts could click our buttons; only the user's own clicks count. */
 const USER_ONLY_EVENTS = ['click', 'auxclick', 'dblclick', 'contextmenu'];
@@ -21,7 +22,8 @@ function dropScriptedEvent(event: Event) {
 export default defineContentScript({
   matches: ['<all_urls>'],
   registration: 'runtime',
-  cssInjectionMode: 'ui',
+  // Styles are loaded through the background, see loadContentScriptCss().
+  cssInjectionMode: 'manual',
   async main(ctx) {
     const bridge = getAssistantBridge();
     if (!bridge || bridge.ctx.isInvalid) return;
@@ -38,6 +40,7 @@ export default defineContentScript({
       name: HOST_NAME,
       position: 'inline',
       anchor: 'html',
+      css: await loadContentScriptCss(),
       // Keep typing and right-clicks in our UI away from the site's handlers.
       isolateEvents: ['keydown', 'keyup', 'keypress', 'contextmenu'],
       onMount(container, shadow, host) {

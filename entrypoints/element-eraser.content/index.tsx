@@ -12,7 +12,8 @@ import { onMessage } from '@/utils/messaging';
 export default defineContentScript({
   matches: ['<all_urls>'],
   registration: 'runtime',
-  cssInjectionMode: 'ui',
+  // Styles are loaded through the background, see loadContentScriptCss().
+  cssInjectionMode: 'manual',
   async main(ctx) {
     const store = createEraserStore();
     const overlay = createOverlayController(ctx, {

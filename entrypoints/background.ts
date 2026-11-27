@@ -2,6 +2,7 @@
 import { features } from '@/features';
 import type { FeatureContextMenu } from '@/features/types';
 import { getFeatureEnabledMap, isFeatureEnabled, watchFeatureEnabled } from '@/utils/feature-settings';
+import { setupContentScriptCssBackground } from '@/utils/content-script-css';
 import { notify } from '@/utils/notify';
 
 const menuHandlers = new Map<string, FeatureContextMenu>();
@@ -32,6 +33,7 @@ function rebuildMenus(): Promise<void> {
 }
 
 export default defineBackground(() => {
+  setupContentScriptCssBackground();
   const declaredCommands = browser.runtime.getManifest().commands ?? {};
   for (const feature of features) {
     for (const command of feature.commands ?? []) {
