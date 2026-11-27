@@ -1,7 +1,8 @@
 import { browser } from 'wxt/browser';
 import { getLayoutXraySettings, type LayoutXrayMode } from './settings';
 
-const STYLE_ATTR = 'data-tooools-layout-xray';
+/** Marks the injected `<style>`; its presence means X-ray is on in that page. */
+export const LAYOUT_XRAY_STYLE_ATTR = 'data-tooools-layout-xray';
 const DEPTH = 12;
 const PALETTE = [
   '239, 68, 68',   // red
@@ -62,7 +63,7 @@ export async function toggleLayoutXray(tabId: number): Promise<boolean> {
   try {
     const [result] = await browser.scripting.executeScript({
       target: { tabId },
-      args: [STYLE_ATTR, css],
+      args: [LAYOUT_XRAY_STYLE_ATTR, css],
       func: toggleInPage,
     });
     return Boolean(result?.result);
@@ -75,7 +76,7 @@ export async function updateLayoutXray(tabId: number, mode: LayoutXrayMode): Pro
   try {
     await browser.scripting.executeScript({
       target: { tabId },
-      args: [STYLE_ATTR, buildLayoutXrayCss(mode)],
+      args: [LAYOUT_XRAY_STYLE_ATTR, buildLayoutXrayCss(mode)],
       func: updateInPage,
     });
   } catch {
@@ -87,7 +88,7 @@ export async function isLayoutXrayActive(tabId: number): Promise<boolean> {
   try {
     const [result] = await browser.scripting.executeScript({
       target: { tabId },
-      args: [STYLE_ATTR],
+      args: [LAYOUT_XRAY_STYLE_ATTR],
       func: queryInPage,
     });
     return Boolean(result?.result);

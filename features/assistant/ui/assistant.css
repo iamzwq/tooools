@@ -1,0 +1,166 @@
+/* Animations for 小T (inside its shadow root). */
+
+@keyframes tva-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes tva-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.12);
+  }
+}
+
+@keyframes tva-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.65;
+  }
+}
+
+@keyframes tva-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes tva-twinkle {
+  0%,
+  100% {
+    transform: scale(0.6) rotate(0deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.1) rotate(25deg);
+    opacity: 1;
+  }
+}
+
+@keyframes tva-hop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-6px) rotate(-6deg);
+  }
+  60% {
+    transform: translateY(0) rotate(4deg);
+  }
+}
+
+@keyframes tva-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes tva-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.tva-float {
+  animation: tva-float 3.2s ease-in-out infinite;
+}
+
+.tva-hop {
+  animation: tva-hop 0.7s ease-in-out;
+}
+
+.tva-blink {
+  animation: tva-blink 4.8s infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.tva-pulse {
+  animation: tva-pulse 1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.tva-dot {
+  animation: tva-dot 1.2s infinite;
+}
+
+.tva-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.tva-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.tva-twinkle {
+  animation: tva-twinkle 1.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.tva-caret::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: #6366f1;
+  animation: tva-caret 1s steps(1) infinite;
+}
+
+.tva-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgb(99 102 241 / 0.12) 50%, transparent 100%) no-repeat;
+  background-size: 200% 100%;
+  animation: tva-shimmer 1.6s linear infinite;
+}
+
+/* Tucked into the screen edge: no animation work on the page. */
+.tva-still,
+.tva-still * {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tva-float,
+  .tva-hop,
+  .tva-blink,
+  .tva-pulse,
+  .tva-dot,
+  .tva-twinkle,
+  .tva-shimmer {
+    animation: none;
+  }
+}
+
+/* Keep 小T out of printouts (e.g. after clearing a page with 元素擦除). */
+@media print {
+  .tva-root {
+    display: none !important;
+  }
+}

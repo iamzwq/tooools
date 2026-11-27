@@ -1,5 +1,8 @@
 import { browser, type Browser } from 'wxt/browser';
 
+/** True in a content script left behind by an extension update or reload: it can no longer reach the extension. */
+export const isExtensionContextLost = (): boolean => !browser.runtime?.id;
+
 /**
  * Handles one message type and replies with the handler's result.
  *

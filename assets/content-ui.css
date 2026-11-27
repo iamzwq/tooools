@@ -3,6 +3,7 @@
 /*
  * Styles for UIs injected into web pages (inside a shadow root).
  * rem units follow the host page's <html> font-size, so pin the scale to px.
+ * The build turns Tailwind's @property rules into plain defaults (lib/vite/content-script-css.ts).
  */
 @theme {
   --spacing: 4px;
@@ -14,27 +15,4 @@
 
 :root {
   --radius: 10px;
-}
-
-/*
- * WXT moves Tailwind's @property rules into the page; if the page's CSP blocks that
- * <style>, these fallbacks keep borders, outlines and shadows working.
- */
-@layer base {
-  *,
-  ::before,
-  ::after {
-    --tw-border-style: solid;
-    --tw-outline-style: solid;
-    --tw-shadow: 0 0 #0000;
-    --tw-inset-shadow: 0 0 #0000;
-    --tw-ring-shadow: 0 0 #0000;
-    --tw-inset-ring-shadow: 0 0 #0000;
-    --tw-ring-offset-shadow: 0 0 #0000;
-    --tw-ring-offset-width: 0px;
-    --tw-ring-offset-color: #fff;
-    --tw-translate-x: 0;
-    --tw-translate-y: 0;
-    --tw-translate-z: 0;
-  }
 }

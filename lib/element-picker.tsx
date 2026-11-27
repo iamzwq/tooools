@@ -20,6 +20,9 @@ export const boxOf = (el: Element | null): Box | null => {
 export const sameBox = (a: Box | null, b: Box | null) =>
   a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h);
 
+/** Events from Tooools' own page UIs (e.g. 小T), whose shadow hosts are named `tooools-*`. */
+const fromToooolsUi = (e: Event) => e.composedPath().some((node) => node instanceof Element && node.localName.startsWith('tooools-'));
+
 export interface UseElementPickerOptions {
   /** Shadow host of the overlay UI; events coming from it are ignored. */
   host: HTMLElement;
@@ -73,6 +76,7 @@ export function useElementPicker({ host, accept, onPick, onExit, onKeyDown }: Us
     const isOwn = (e: Event) => e.composedPath().includes(host);
     // composedPath()[0] reaches into open shadow roots of page web components.
     const targetOf = (e: Event) => {
+      if (fromToooolsUi(e)) return null;
       const t = e.composedPath()[0];
       if (!(t instanceof Element)) return null;
       if (callbacksRef.current.accept && !callbacksRef.current.accept(t)) return null;
