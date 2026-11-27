@@ -117,6 +117,13 @@
   - API Key 只保存在本机浏览器；生成总结时，视频标题、简介和字幕只会发送给你配置的 AI 服务商
 - **注意**：B站字幕需要登录 B站 后才能获取；没有字幕的视频暂不支持总结。
 
+### 8. YouTube 禁止悬停播放
+
+在 YouTube 首页、搜索结果、订阅、频道页以及观看页右侧推荐列表中，鼠标悬停到视频封面上时不再自动播放预览：
+
+- 在扩展弹窗中打开 / 关闭即可，已打开的 YouTube 页面实时生效，无需刷新
+- 只拦截视频列表中的悬停预览，正常观看页、Shorts 以及频道预告片的播放不受影响
+
 ## 开发与构建
 
 ### 环境要求
@@ -148,6 +155,10 @@ npm run zip:firefox
 
 # TypeScript 类型检查
 npm run compile
+
+# 发布 tag
+npm version 2.1.0 -m "chore: release v%s"
+git push origin main --follow-tags
 ```
 
 ### 本地加载扩展
@@ -172,6 +183,7 @@ git push origin main --follow-tags
 ├── features/              # 功能模块（每个子目录对应一个独立功能）
 │   ├── assistant/         # 小T 悬浮助手（所有网页的统一入口）
 │   ├── video-summary/     # 视频 AI 总结（B站 / YouTube）
+│   ├── youtube-hover-preview/ # YouTube 禁止悬停播放
 │   ├── export-image/      # 导出 / 复制图片
 │   ├── save-image-to-123pan/ # 图片保存到 123云盘
 │   ├── css-inspector/     # 检查元素 CSS
