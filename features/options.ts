@@ -1,5 +1,15 @@
 import type { ComponentType } from 'react';
-import { Bot, CloudUpload, CodeXml, Eraser, ImageDown, Layers, Sparkles, type LucideIcon } from 'lucide-react';
+import {
+  Bot,
+  CloudUpload,
+  CodeXml,
+  Eraser,
+  ImageDown,
+  Layers,
+  MousePointerBan,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
 import AssistantOptions from './assistant/Options';
 import CssInspectorOptions, { CssInspectorAction } from './css-inspector/Options';
 import ElementEraserOptions, { ElementEraserAction } from './element-eraser/Options';
@@ -27,6 +37,7 @@ export const featurePopup: Partial<Record<string, FeaturePopup>> = {
     Options: VideoSummaryOptions,
     Action: VideoSummaryAction,
   },
+  'youtube-hover-preview': { icon: MousePointerBan, tile: 'bg-red-500' },
   'export-image': { icon: ImageDown, tile: 'bg-violet-500', Options: ExportImageOptions },
   'save-image-to-123pan': { icon: CloudUpload, tile: 'bg-sky-500', Options: Pan123Options },
   'css-inspector': { icon: CodeXml, tile: 'bg-amber-500', Options: CssInspectorOptions, Action: CssInspectorAction },
