@@ -32,6 +32,10 @@ interface Props {
   onTab: (tab: PanelTab) => void;
   onClose: () => void;
   onSettings: () => void;
+  /** The user dropped the panel here (dragging its title bar). */
+  onMove: (position: PanelPosition) => void;
+  /** Double-clicking the title bar puts the panel back in its default place. */
+  onResetPosition: () => void;
 }
 
 export async function copyText(text: string, container: HTMLElement) {
@@ -343,8 +347,38 @@ function TranscriptView({
   );
 }
 
-export function SummaryPanel({ state, store, tab, mood, title, style, onTab, onClose, onSettings }: Props) {
+export interface PanelPosition {
+  x: number;
+  y: number;
+}
+
+/** Smallest height the panel shrinks to, so a panel moved near the bottom stays fully on screen. */
+const PANEL_MIN_HEIGHT = 120;
+const PANEL_MARGIN = 14;
+/** Dragging starts anywhere on the title bar except its controls. */
+const NOT_A_HANDLE = 'button, a, input, textarea, select';
+
+/** Keeps a panel `width` wide inside the window. */
+export function clampPanelPosition({ x, y }: PanelPosition, width: number): PanelPosition {
+  return {
+    x: Math.round(Math.min(Math.max(x, 0), Math.max(0, innerWidth - width))),
+    y: Math.round(Math.min(Math.max(y, 0), Math.max(0, innerHeight - PANEL_MIN_HEIGHT))),
+  };
+}
+
+export function panelMaxHeight(top: number): number {
+  return Math.max(PANEL_MIN_HEIGHT, Math.min(720, innerHeight - top - PANEL_MARGIN));
+}
+
+export function SummaryPanel({ state, store, tab, mood, title, style, onTab, onClose, onSettings, onMove, onResetPosition }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
+  /** While dragging, the panel is moved directly, so a streaming summary or long transcript doesn't re-render per frame. */
+  const drag = useRef<{ dx: number; dy: number; to: PanelPosition | null } | null>(null);
+  const endDrag = () => {
+    const to = drag.current?.to;
+    drag.current = null;
+    if (to) onMove(to);
+  };
   const [copied, markCopied] = useCopied();
   const { summary, transcript } = state;
   const done = summary.phase === 'done';
@@ -368,7 +402,30 @@ export function SummaryPanel({ state, store, tab, mood, title, style, onTab, onC
       className="pointer-events-auto fixed flex flex-col overflow-hidden rounded-2xl border bg-popover text-popover-foreground shadow-2xl animate-in fade-in zoom-in-[0.98] duration-200"
       style={style}
     >
-      <div className="relative flex items-center gap-2.5 border-b px-3 py-2.5">
+      <div
+        className="relative flex cursor-grab touch-none items-center gap-2.5 border-b px-3 py-2.5 select-none active:cursor-grabbing"
+        title="拖动可移动面板，双击回到小T 旁边"
+        onPointerDown={(e) => {
+          const el = rootRef.current;
+          if (e.button !== 0 || !el || (e.target as Element).closest(NOT_A_HANDLE)) return;
+          const rect = el.getBoundingClientRect();
+          drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top, to: null };
+          e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          const el = rootRef.current;
+          if (!d || !el) return;
+          const to = clampPanelPosition({ x: e.clientX - d.dx, y: e.clientY - d.dy }, el.offsetWidth);
+          d.to = to;
+          Object.assign(el.style, { left: `${to.x}px`, top: `${to.y}px`, right: 'auto', maxHeight: `${panelMaxHeight(to.y)}px` });
+        }}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onDoubleClick={(e) => {
+          if (!(e.target as Element).closest(NOT_A_HANDLE)) onResetPosition();
+        }}
+      >
         <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-violet-400 via-indigo-500 to-sky-400" />
         <Mascot mood={mood} className="size-8 shrink-0" />
         <div className="min-w-0 flex-1">

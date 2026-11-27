@@ -47,6 +47,11 @@ export const mascotPositionItem = storage.defineItem<MascotPosition | null>('loc
   fallback: null,
 });
 
+/** Where the user dragged the summary panel (its top-left corner, in px); null keeps it beside 小T. */
+export const summaryPanelPositionItem = storage.defineItem<{ x: number; y: number } | null>('local:summaryPanelPosition', {
+  fallback: null,
+});
+
 /** Set once 小T has introduced itself. */
 export const mascotGreetedItem = storage.defineItem<boolean>('local:assistantGreeted', {
   fallback: false,

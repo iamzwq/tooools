@@ -4,7 +4,7 @@ import { browser } from 'wxt/browser';
 import { LAYOUT_XRAY_STYLE_ATTR } from '@/features/layout-xray/toggle';
 import { VIDEO_SUMMARY_FEATURE_ID } from '@/features/video-summary/messages';
 import { isRunning, type AssistantStore } from '@/features/video-summary/ui/store';
-import { SummaryPanel, type PanelTab } from '@/features/video-summary/ui/SummaryPanel';
+import { SummaryPanel, clampPanelPosition, panelMaxHeight, type PanelPosition, type PanelTab } from '@/features/video-summary/ui/SummaryPanel';
 import { OVERLAY_Z } from '@/lib/element-picker';
 import { cn } from '@/lib/utils';
 import { getFeatureEnabledMap, watchFeatureEnabled } from '@/utils/feature-settings';
@@ -18,6 +18,7 @@ import {
   getAssistantSettings,
   mascotGreetedItem,
   mascotPositionItem,
+  summaryPanelPositionItem,
   videoTipShownItem,
   type AssistantSettings,
   type MascotPosition,
@@ -147,6 +148,8 @@ export function Assistant({ store, host, requests, visibility }: Props) {
   const [viewport, setViewport] = useState({ w: innerWidth, h: innerHeight });
   const [menu, setMenu] = useState<'main' | 'context' | null>(null);
   const [panel, setPanel] = useState<PanelTab | null>(null);
+  /** Where the user dragged the panel; null keeps it beside 小T. */
+  const [panelPosition, setPanelPosition] = useState<PanelPosition | null>(null);
   const [hover, setHover] = useState(false);
   // Tucked into the screen edge; slides out on hover, on video pages and when it has something to say.
   const [peek, setPeek] = useState(true);
@@ -174,16 +177,19 @@ export function Assistant({ store, host, requests, visibility }: Props) {
     void getFeatureEnabledMap().then(setEnabledMap);
     void getAssistantSettings().then(setSettings);
     void mascotPositionItem.getValue().then((saved) => saved && setPosition(saved));
+    void summaryPanelPositionItem.getValue().then(setPanelPosition);
     const unwatchFeatures = watchFeatureEnabled(() => void getFeatureEnabledMap().then(setEnabledMap));
     const unwatchSettings = assistantSettingsItem.watch(() => void getAssistantSettings().then(setSettings));
     // Moving 小T in one tab moves it everywhere.
     const unwatchPosition = mascotPositionItem.watch((next) => next && setPosition(next));
+    const unwatchPanelPosition = summaryPanelPositionItem.watch(setPanelPosition);
     const onResize = () => setViewport({ w: innerWidth, h: innerHeight });
     addEventListener('resize', onResize);
     return () => {
       unwatchFeatures();
       unwatchSettings();
       unwatchPosition();
+      unwatchPanelPosition();
       removeEventListener('resize', onResize);
       clearTimeout(flashTimer.current);
     };
@@ -348,12 +354,22 @@ export function Assistant({ store, host, requests, visibility }: Props) {
   };
   const panelOffset = showMascot ? besideMascot : EDGE;
   const panelTop = clamp(Math.round(viewport.h * 0.09), EDGE, 72);
-  const panelStyle: CSSProperties = {
+  let panelStyle: CSSProperties = {
     ...atSide(panelOffset),
     top: panelTop,
     width: Math.max(280, Math.min(PANEL_WIDTH, viewport.w - panelOffset - EDGE)),
     // Short states (progress, errors) shrink to fit; long content scrolls inside.
     maxHeight: Math.max(280, Math.min(720, viewport.h - panelTop - EDGE)),
+  };
+  if (panelPosition) {
+    // Wherever it was dropped, kept inside the window (which may be smaller than when it was moved).
+    const width = Math.max(280, Math.min(PANEL_WIDTH, viewport.w - EDGE * 2));
+    const { x, y } = clampPanelPosition(panelPosition, width);
+    panelStyle = { left: x, top: y, width, maxHeight: panelMaxHeight(y) };
+  }
+  const movePanel = (next: PanelPosition | null) => {
+    setPanelPosition(next);
+    void summaryPanelPositionItem.setValue(next);
   };
   const bubbleStyle: CSSProperties = { ...atSide(besideMascot - 4), top: mascotTop + SIZE / 2, transform: 'translateY(-50%)' };
 
@@ -407,6 +423,8 @@ export function Assistant({ store, host, requests, visibility }: Props) {
           onTab={setPanel}
           onClose={() => setPanel(null)}
           onSettings={() => void openSettings('ai')}
+          onMove={movePanel}
+          onResetPosition={() => movePanel(null)}
         />
       )}
 
