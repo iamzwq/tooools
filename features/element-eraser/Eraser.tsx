@@ -105,7 +105,7 @@ export default function Eraser({ host, store, onExit }: Props) {
     <div className="pointer-events-none fixed inset-0" style={{ zIndex: OVERLAY_Z }}>
       {hoverBox && <HoverHighlight box={hoverBox} label={hoverLabel} tone="rose" />}
 
-      <div className="pointer-events-auto fixed bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border bg-popover/95 px-3 py-1.5 text-xs text-popover-foreground shadow-2xl backdrop-blur">
+      <div className="pointer-events-auto fixed bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border bg-popover/95 px-3 py-1.5 text-xs text-popover-foreground shadow-2xl backdrop-blur-sm">
         <span className="px-1 font-medium">
           {count > 0 ? `已隐藏 ${count} 个元素` : '点击元素临时隐藏'}
         </span>

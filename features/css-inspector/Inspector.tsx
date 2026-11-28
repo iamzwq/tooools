@@ -175,7 +175,7 @@ export default function Inspector({ host, onExit }: Props) {
     <div ref={rootRef} className="pointer-events-none fixed inset-0" style={{ zIndex: OVERLAY_Z }}>
       {selBox && (
         <div
-          className="fixed rounded-[2px] border-2 border-dashed border-orange-500 bg-orange-500/10"
+          className="fixed rounded-xs border-2 border-dashed border-orange-500 bg-orange-500/10"
           style={{ left: selBox.x, top: selBox.y, width: selBox.w, height: selBox.h }}
         />
       )}
@@ -266,7 +266,7 @@ function CssValue({ value }: { value: string }) {
         i % 2 === 1 ? (
           <Fragment key={i}>
             <span
-              className="mr-1 inline-block size-2.5 rounded-[2px] border border-black/20 align-[-1px]"
+              className="mr-1 inline-block size-2.5 rounded-xs border border-black/20 align-[-1px]"
               style={{ background: part }}
             />
             {part}

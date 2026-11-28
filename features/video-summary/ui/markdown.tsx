@@ -78,9 +78,9 @@ function TimeChip({ label, onSeek }: { label: string; onSeek: (seconds: number) 
       type="button"
       onClick={() => onSeek(seconds)}
       title={`跳转到 ${label}`}
-      className="mx-0.5 inline-flex translate-y-[-1px] items-center gap-0.5 rounded-md bg-indigo-500/10 px-1.5 py-px align-middle font-mono text-[11px] leading-4 font-medium text-indigo-600 tabular-nums transition hover:bg-indigo-500 hover:text-white dark:bg-indigo-400/15 dark:text-indigo-300 dark:hover:bg-indigo-400 dark:hover:text-indigo-950"
+      className="mx-0.5 inline-flex -translate-y-px items-center gap-0.5 rounded-md bg-indigo-500/10 px-1.5 py-px align-middle font-mono text-[12px] leading-5 font-medium text-indigo-600 tabular-nums transition hover:bg-indigo-500 hover:text-white dark:bg-indigo-400/15 dark:text-indigo-300 dark:hover:bg-indigo-400 dark:hover:text-indigo-950"
     >
-      <Play className="size-2.5 fill-current" />
+      <Play className="size-3 fill-current" />
       {label}
     </button>
   );
@@ -112,7 +112,7 @@ function renderInline(text: string, onSeek: (seconds: number) => void): ReactNod
       );
     } else if (m[4]) {
       nodes.push(
-        <code key={key} className="rounded bg-muted px-1 font-mono text-[12px]">
+        <code key={key} className="rounded-sm bg-muted px-1 font-mono text-[13px]">
           {m[4]}
         </code>,
       );
@@ -140,7 +140,7 @@ export function Markdown({
 }) {
   const blocks = useMemo(() => parseBlocks(text), [text]);
   return (
-    <div className="flex flex-col gap-1.5 text-[13px] leading-6 text-foreground/90">
+    <div className="flex flex-col gap-1.5 text-[15px] leading-7 text-foreground/90">
       {blocks.map((block, i) => {
         const caret = streaming && i === blocks.length - 1 ? <span className="tva-caret" /> : null;
         switch (block.type) {
@@ -150,11 +150,11 @@ export function Markdown({
                 key={i}
                 className={
                   block.level <= 2
-                    ? 'mt-3 flex items-center gap-2 text-[14px] font-semibold text-foreground first:mt-0'
-                    : 'mt-2 text-[13px] font-semibold text-foreground first:mt-0'
+                    ? 'mt-3 flex items-center gap-2 text-[17px] font-semibold text-foreground first:mt-0'
+                    : 'mt-2 text-[15px] font-semibold text-foreground first:mt-0'
                 }
               >
-                {block.level <= 2 && <span className="h-3.5 w-1 shrink-0 rounded-full bg-gradient-to-b from-violet-400 to-indigo-500" />}
+                {block.level <= 2 && <span className="h-4 w-1 shrink-0 rounded-full bg-linear-to-b from-violet-400 to-indigo-500" />}
                 <span>
                   {renderInline(block.text, onSeek)}
                   {caret}
@@ -168,7 +168,7 @@ export function Markdown({
                   <span className="min-w-4 shrink-0 font-medium text-indigo-500 tabular-nums">{block.ordinal}.</span>
                 ) : (
                   <span
-                    className={`mt-[9px] size-1.5 shrink-0 rounded-full ${block.depth ? 'border border-indigo-400' : 'bg-indigo-400'}`}
+                    className={`mt-2.75 size-1.5 shrink-0 rounded-full ${block.depth ? 'border border-indigo-400' : 'bg-indigo-400'}`}
                   />
                 )}
                 <div className="min-w-0 flex-1">

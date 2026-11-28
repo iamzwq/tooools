@@ -11,6 +11,8 @@
   --text-sm: 14px;
   --text-base: 16px;
   --text-lg: 18px;
+  --radius-xs: 2px;
+  --radius-2xl: 16px;
 }
 
 :root {

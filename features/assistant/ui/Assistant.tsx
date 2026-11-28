@@ -23,7 +23,7 @@ import {
   type AssistantSettings,
   type MascotPosition,
 } from '../settings';
-import { isSiteBlocked, siteOf } from '../sites';
+import { isSiteBlocked, siteOf } from '@/lib/sites';
 import { AssistantMenu, MascotContextMenu, type MenuTool } from './AssistantMenu';
 import { Mascot, type MascotMood } from './Mascot';
 import { useHostDark } from './theme';
@@ -31,7 +31,7 @@ import { useHostDark } from './theme';
 const SIZE = 56;
 const EDGE = 14;
 const GAP = 12;
-const PANEL_WIDTH = 420;
+const PANEL_WIDTH = 460;
 const PEEK_AFTER_MS = 5000;
 const TIP_MS = 8000;
 const DEFAULT_POSITION: MascotPosition = { side: 'right', y: 0.62 };
@@ -110,7 +110,7 @@ function Bubble({ text, style, side, onClick }: { text: string; style: CSSProper
   return (
     <div
       role="status"
-      className="pointer-events-auto fixed max-w-[250px] rounded-2xl border bg-popover px-3 py-2 text-xs leading-5 text-popover-foreground shadow-lg animate-in fade-in zoom-in-95 duration-200"
+      className="pointer-events-auto fixed max-w-62.5 rounded-2xl border bg-popover px-3 py-2 text-xs leading-5 text-popover-foreground shadow-lg animate-in fade-in zoom-in-95 duration-200"
       style={style}
     >
       {onClick ? (
@@ -123,7 +123,7 @@ function Bubble({ text, style, side, onClick }: { text: string; style: CSSProper
       <span
         className={cn(
           'absolute top-1/2 size-2.5 -translate-y-1/2 rotate-45 border bg-popover',
-          side === 'right' ? '-right-[6px] border-b-0 border-l-0' : '-left-[6px] border-t-0 border-r-0',
+          side === 'right' ? '-right-1.5 border-b-0 border-l-0' : '-left-1.5 border-t-0 border-r-0',
         )}
       />
     </div>
@@ -462,7 +462,7 @@ export function Assistant({ store, host, requests, visibility }: Props) {
           aria-expanded={menu === 'main'}
           title={peek ? '小T 页面助手（右键可隐藏）' : undefined}
           className={cn(
-            'pointer-events-auto fixed touch-none rounded-full outline-none select-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+            'pointer-events-auto fixed touch-none rounded-full outline-hidden select-none focus-visible:ring-2 focus-visible:ring-indigo-400',
             drag ? 'cursor-grabbing' : 'cursor-pointer transition-[transform,opacity] duration-300',
           )}
           style={{

@@ -166,11 +166,11 @@ export function HoverHighlight({
   return (
     <>
       <div
-        className={`fixed rounded-[2px] border-2 ${styles.box}`}
+        className={`fixed rounded-xs border-2 ${styles.box}`}
         style={{ left: box.x, top: box.y, width: box.w, height: box.h }}
       />
       <div
-        className="fixed max-w-[min(480px,90vw)] truncate rounded-md bg-neutral-900 px-2 py-1 font-mono text-xs text-white shadow"
+        className="fixed max-w-[min(480px,90vw)] truncate rounded-md bg-neutral-900 px-2 py-1 font-mono text-xs text-white shadow-sm"
         style={{
           left: Math.max(4, Math.min(box.x, innerWidth - 200)),
           top: box.y > 30 ? box.y - 28 : Math.min(box.y + box.h + 4, innerHeight - 28),

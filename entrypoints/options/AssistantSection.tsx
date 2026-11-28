@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { ASSISTANT_FEATURE_ID } from '@/features/assistant/messages';
 import { assistantSettingsItem, blockSite, getAssistantSettings, unblockSite } from '@/features/assistant/settings';
-import { normalizeSite } from '@/features/assistant/sites';
+import { normalizeSite } from '@/lib/sites';
 import { Mascot } from '@/features/assistant/ui/Mascot';
 import { getFeatureEnabledMap, setFeatureEnabled, watchFeatureEnabled } from '@/utils/feature-settings';
 import { Field } from './fields';

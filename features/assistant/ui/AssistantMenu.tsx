@@ -46,7 +46,7 @@ function VideoSection({ phase, onSummary, onTranscript }: { phase: SummaryPhase;
         type="button"
         role="menuitem"
         onClick={onSummary}
-        className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 px-3 py-2.5 text-left text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 active:brightness-95"
+        className="group flex items-center gap-3 rounded-xl bg-linear-to-r from-violet-500 to-indigo-500 px-3 py-2.5 text-left text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 active:brightness-95"
       >
         <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/20">
           <Sparkles className="size-4" />
@@ -131,7 +131,7 @@ function ToolSection({ tools, compact, onTool }: { tools: MenuTool[]; compact: b
 
 export function AssistantMenu({ style, title, video, tools, onSummary, onTranscript, onTool, onSettings, onHide }: Props) {
   return (
-    <div role="menu" aria-label="小T 页面助手" className={cn(POPOVER, 'w-[264px] rounded-2xl')} style={style}>
+    <div role="menu" aria-label="小T 页面助手" className={cn(POPOVER, 'w-66 rounded-2xl')} style={style}>
       <div className="px-3.5 pt-3 pb-2">
         <div className="text-[13px] font-semibold">
           小T <span className="font-normal text-muted-foreground">· {video ? '视频助手' : '页面助手'}</span>
@@ -198,7 +198,7 @@ export function MascotContextMenu({
   onManage: () => void;
 }) {
   return (
-    <div role="menu" aria-label="小T 选项" className={cn(POPOVER, 'w-[236px] rounded-xl p-1')} style={style}>
+    <div role="menu" aria-label="小T 选项" className={cn(POPOVER, 'w-59 rounded-xl p-1')} style={style}>
       <ContextItem icon={EyeOff} label="在当前页面隐藏" hint="刷新页面后恢复" onClick={onHidePage} />
       {site && <ContextItem icon={Ban} label={`在 ${site} 不再显示`} hint="可以在设置里恢复" onClick={onBlockSite} />}
       <div className="mx-1 my-1 h-px bg-border" />

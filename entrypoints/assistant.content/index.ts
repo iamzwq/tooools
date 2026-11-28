@@ -8,7 +8,7 @@ import {
   type AssistantPageStatus,
 } from '@/features/assistant/messages';
 import { assistantSettingsItem, getAssistantSettings } from '@/features/assistant/settings';
-import { isSiteBlocked } from '@/features/assistant/sites';
+import { isSiteBlocked } from '@/lib/sites';
 import { VIDEO_SUMMARY_OPEN } from '@/features/video-summary/messages';
 import type { PanelTab } from '@/features/video-summary/ui/SummaryPanel';
 import { getFeatureEnabledMap, watchFeatureEnabled } from '@/utils/feature-settings';

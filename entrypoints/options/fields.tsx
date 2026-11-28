@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 
 export const selectClass =
-  'h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:[&>option]:bg-popover';
+  'h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs outline-hidden focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:[&>option]:bg-popover';
 
 export const textareaClass =
-  'min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-2 text-sm leading-6 shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30';
+  'min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-2.5 py-2 text-sm leading-6 shadow-xs outline-hidden placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30';
 
 /** A labelled settings row: label on the left, control and hint on the right. */
 export function Field({ label, htmlFor, hint, children }: { label: string; htmlFor?: string; hint?: ReactNode; children: ReactNode }) {

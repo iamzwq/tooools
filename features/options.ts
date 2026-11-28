@@ -30,10 +30,10 @@ export interface FeaturePopup {
 
 /** Popup-only: feature id -> icon, color and settings UI. Register new features here. */
 export const featurePopup: Partial<Record<string, FeaturePopup>> = {
-  assistant: { icon: Bot, tile: 'bg-gradient-to-br from-indigo-400 to-violet-600', Options: AssistantOptions },
+  assistant: { icon: Bot, tile: 'bg-linear-to-br from-indigo-400 to-violet-600', Options: AssistantOptions },
   'video-summary': {
     icon: Sparkles,
-    tile: 'bg-gradient-to-br from-violet-500 to-indigo-500',
+    tile: 'bg-linear-to-br from-violet-500 to-indigo-500',
     Options: VideoSummaryOptions,
     Action: VideoSummaryAction,
   },

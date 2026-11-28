@@ -135,8 +135,8 @@ function ErrorCard({ error, onRetry, onSettings }: { error: ErrorInfo; onRetry?:
   return (
     <div className="flex flex-col items-center gap-2.5 px-2 py-8 text-center">
       <Mascot mood={error.code === 'config' ? 'idle' : 'error'} className="size-14" />
-      <div className="text-sm font-semibold">{ERROR_TITLES[error.code] ?? '出了点问题'}</div>
-      <p className="max-w-[320px] text-xs leading-5 break-words text-muted-foreground">{error.message}</p>
+      <div className="text-[15px] font-semibold">{ERROR_TITLES[error.code] ?? '出了点问题'}</div>
+      <p className="max-w-85 text-[13px] leading-6 break-words text-muted-foreground">{error.message}</p>
       {actions.length > 0 && <div className="mt-1 flex flex-wrap justify-center gap-2">{actions}</div>}
     </div>
   );
@@ -146,11 +146,11 @@ function StartScreen({ onStart }: { onStart: () => void }) {
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
       <Mascot mood="happy" className="tva-float size-16" />
-      <div className="text-sm font-semibold">一键看懂这个视频</div>
-      <p className="max-w-[280px] text-xs leading-5 text-muted-foreground">
+      <div className="text-[15px] font-semibold">一键看懂这个视频</div>
+      <p className="max-w-75 text-[13px] leading-6 text-muted-foreground">
         小T 会读取视频字幕，用 AI 提炼要点并标注时间戳，点击时间戳就能跳到对应位置。
       </p>
-      <Button className="mt-1 bg-gradient-to-r from-violet-500 to-indigo-500 text-white hover:brightness-110" onClick={onStart}>
+      <Button className="mt-1 bg-linear-to-r from-violet-500 to-indigo-500 text-white hover:brightness-110" onClick={onStart}>
         <Sparkles />
         开始总结
       </Button>
@@ -172,20 +172,20 @@ function Progress({ summary, onStop }: { summary: SummaryState; onStop: () => vo
   return (
     <div className="flex flex-col items-center gap-4 px-4 py-8">
       <Mascot mood="thinking" className="tva-float size-16" />
-      <div className="text-sm font-medium">小T 正在认真看视频…</div>
-      <ol className="flex w-full max-w-[260px] flex-col gap-2.5">
+      <div className="text-[15px] font-medium">小T 正在认真看视频…</div>
+      <ol className="flex w-full max-w-70 flex-col gap-2.5">
         {steps.map((s, i) => (
-          <li key={i} className={cn('flex items-start gap-2.5 text-[13px]', i > step && 'text-muted-foreground')}>
+          <li key={i} className={cn('flex items-start gap-2.5 text-[14px]', i > step && 'text-muted-foreground')}>
             {i < step ? (
               <CircleCheck className="mt-0.5 size-4 shrink-0 text-emerald-500" />
             ) : i === step ? (
               <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-indigo-500" />
             ) : (
-              <span className="mt-[5px] ml-[3px] size-2.5 shrink-0 rounded-full border-2 border-muted-foreground/40" />
+              <span className="mt-1.25 ml-0.75 size-2.5 shrink-0 rounded-full border-2 border-muted-foreground/40" />
             )}
             <span className="min-w-0">
               <span className={cn(i === step && 'font-medium')}>{s.label}</span>
-              {s.detail && i <= step && <span className="block truncate text-[11px] text-muted-foreground">{s.detail}</span>}
+              {s.detail && i <= step && <span className="block truncate text-[12px] text-muted-foreground">{s.detail}</span>}
             </span>
           </li>
         ))}
@@ -271,7 +271,7 @@ function TranscriptView({
   }
   if (!ready) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-xs text-muted-foreground">
+      <div className="flex flex-col items-center gap-3 py-16 text-[13px] text-muted-foreground">
         <Loader2 className="size-5 animate-spin text-indigo-500" />
         正在读取字幕…
       </div>
@@ -291,7 +291,7 @@ function TranscriptView({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`搜索 ${lines.length} 行字幕`}
-            className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+            className="min-w-0 flex-1 bg-transparent text-[13px] outline-hidden placeholder:text-muted-foreground"
           />
           {query && (
             <button type="button" onClick={() => setQuery('')} aria-label="清空搜索" className="text-muted-foreground hover:text-foreground">
@@ -304,7 +304,7 @@ function TranscriptView({
             value={transcript.trackId}
             onChange={(e) => void store.loadTranscript(e.target.value).catch(() => {})}
             title="切换字幕"
-            className="h-7 max-w-[110px] truncate rounded-md border bg-background px-1.5 text-xs outline-none"
+            className="h-7 max-w-30 truncate rounded-md border bg-background px-1.5 text-[13px] outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/30"
           >
             {tracks.map((t) => (
               <option key={t.id} value={t.id}>
@@ -323,7 +323,7 @@ function TranscriptView({
         onWheel={() => (lastUserScroll.current = Date.now())}
         onTouchMove={() => (lastUserScroll.current = Date.now())}
       >
-        {shown.length === 0 && <div className="py-10 text-center text-xs text-muted-foreground">没有找到「{query}」</div>}
+        {shown.length === 0 && <div className="py-10 text-center text-[13px] text-muted-foreground">没有找到「{query}」</div>}
         {shown.map((line) => {
           const index = lines.indexOf(line);
           return (
@@ -335,10 +335,10 @@ function TranscriptView({
               onClick={() => seekVideo(line.start)}
               className="flex w-full gap-2.5 rounded-lg px-2 py-1.5 text-left transition hover:bg-muted data-[active=true]:bg-indigo-500/10"
             >
-              <span className="w-12 shrink-0 pt-px font-mono text-[11px] text-indigo-500 tabular-nums dark:text-indigo-300">
+              <span className="w-14 shrink-0 pt-0.5 font-mono text-[12px] text-indigo-500 tabular-nums dark:text-indigo-300">
                 {formatTimestamp(line.start)}
               </span>
-              <span className="min-w-0 flex-1 text-[13px] leading-5">{highlight(line.text, q)}</span>
+              <span className="min-w-0 flex-1 text-[14px] leading-6">{highlight(line.text, q)}</span>
             </button>
           );
         })}
@@ -426,11 +426,11 @@ export function SummaryPanel({ state, store, tab, mood, title, style, onTab, onC
           if (!(e.target as Element).closest(NOT_A_HANDLE)) onResetPosition();
         }}
       >
-        <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-violet-400 via-indigo-500 to-sky-400" />
+        <div className="absolute inset-x-0 top-0 h-0.5 bg-linear-to-r from-violet-400 via-indigo-500 to-sky-400" />
         <Mascot mood={mood} className="size-8 shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">AI 视频总结</div>
-          <div className="truncate text-xs text-muted-foreground" title={title}>
+          <div className="text-[15px] font-semibold">AI 视频总结</div>
+          <div className="truncate text-[13px] text-muted-foreground" title={title}>
             {title}
           </div>
         </div>
@@ -447,7 +447,7 @@ export function SummaryPanel({ state, store, tab, mood, title, style, onTab, onC
             onClick={() => onTab(key)}
             aria-pressed={tab === key}
             className={cn(
-              'rounded-md px-2.5 py-1 text-xs font-medium transition',
+              'rounded-md px-2.5 py-1 text-[13px] font-medium transition',
               tab === key ? 'bg-indigo-500/10 text-indigo-600 dark:bg-indigo-400/15 dark:text-indigo-300' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )}
           >
@@ -488,7 +488,7 @@ export function SummaryPanel({ state, store, tab, mood, title, style, onTab, onC
         )}
       </div>
 
-      <div className="flex items-center gap-2 border-t px-3 py-1.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-2 border-t px-3 py-1.5 text-[12px] text-muted-foreground">
         <span className="min-w-0 flex-1 truncate" title={meta}>
           {meta}
         </span>

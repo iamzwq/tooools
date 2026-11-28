@@ -39,11 +39,15 @@ async function resolveCandidates(info: Browser.contextMenus.OnClickData, tab?: B
  * covers, ...) and downloads the first candidate that is a real image; later candidates are fallbacks.
  */
 export async function getImageAt(info: Browser.contextMenus.OnClickData, tab?: Browser.tabs.Tab): Promise<LoadedImage> {
-  const candidates = await resolveCandidates(info, tab);
+  return loadImage(await resolveCandidates(info, tab), tab?.id, info.frameId);
+}
+
+/** Downloads the first candidate that is a real image; `tabId`/`frameId` allow fetching from the page as a fallback. */
+export async function loadImage(candidates: ImageCandidate[], tabId?: number, frameId?: number): Promise<LoadedImage> {
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
-      const { data, mimeType } = await fetchImage(candidate.url, tab?.id, info.frameId);
+      const { data, mimeType } = await fetchImage(candidate.url, tabId, frameId);
       const sniffed = sniffImageMime(data, mimeType.startsWith('image/') ? mimeType : '');
       if (!sniffed) throw new Error('不是图片');
       return { candidate, data, mimeType: sniffed };
@@ -51,6 +55,7 @@ export async function getImageAt(info: Browser.contextMenus.OnClickData, tab?: B
       lastError = err;
     }
   }
+  if (!candidates.length) throw new Error('此处未找到图片');
   const reason = lastError instanceof Error ? `：${lastError.message}` : '';
   throw new Error(`图片下载失败${reason}`);
 }

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { openOptionsPage } from '@/utils/options-page';
 import { ASSISTANT_SHOW, ASSISTANT_STATUS, type AssistantPageStatus } from './messages';
 import { blockSite, getAssistantSettings, unblockHost } from './settings';
-import { matchesSite, siteOf } from './sites';
+import { matchesSite, siteOf } from '@/lib/sites';
 
 type PageState =
   | { kind: 'unsupported' }

@@ -101,7 +101,7 @@ function parseElement(el: Element): string[] {
 }
 
 /** Elements under the point, topmost first, descending into open shadow roots. */
-function elementsAt(root: Document | ShadowRoot, x: number, y: number, seen = new Set<Element>()): Element[] {
+export function elementsAt(root: Document | ShadowRoot, x: number, y: number, seen = new Set<Element>()): Element[] {
   const result: Element[] = [];
   for (const el of root.elementsFromPoint(x, y)) {
     if (seen.has(el)) continue;

@@ -1,5 +1,5 @@
 import { storage } from 'wxt/utils/storage';
-import { matchesSite } from './sites';
+import { matchesSite } from '@/lib/sites';
 
 export interface AssistantSettings {
   /** Sites (with their subdomains) where 小T stays hidden. */
