@@ -76,19 +76,12 @@ function systemPrompt(prefs: SummaryPrefs): string {
 
 function outputFormat(detail: SummaryDetail): string {
   const points = { brief: '3～5', standard: '5～8', detailed: '8～12' }[detail];
-  const sections = [
+  const subItems = detail === 'detailed' ? '；需要时可用缩进的子列表补充细节' : '';
+  return [
     '## 一句话总结\n用一句话概括视频的核心内容。',
-    `## 核心要点\n${points} 条，按时间顺序，每条格式为：- [时间戳] **要点标题**：一到两句话说明，保留关键数据、结论和例子。`,
-  ];
-  if (detail !== 'brief') {
-    sections.push(
-      detail === 'detailed'
-        ? '## 内容脉络\n按视频的段落结构逐段列出，每条格式为：- [时间戳] 段落主题：这一段讲了什么；可用缩进的子列表补充细节。'
-        : '## 内容脉络\n按视频的段落结构列出 4～8 个主要段落，每条格式为：- [时间戳] 段落主题：这一段讲了什么。',
-    );
-  }
-  sections.push('## 结论与启发\n如果视频有明确的结论、建议或金句，列出 1～3 条；没有就省略这一节。');
-  return sections.join('\n\n');
+    `## 核心要点\n${points} 条，按时间顺序，每条格式为：- [时间戳] **要点标题**：一到两句话说明，保留关键数据、结论和例子${subItems}。`,
+    '只输出以上两节，不要添加其他章节。',
+  ].join('\n\n');
 }
 
 function videoInfo(input: SummaryInput): string {

@@ -22,8 +22,8 @@ const LANGUAGES: { value: SummaryLanguage; label: string }[] = [
 
 const DETAILS: { value: SummaryDetail; label: string; hint: string }[] = [
   { value: 'brief', label: '简洁', hint: '一句话总结 + 3～5 个核心要点' },
-  { value: 'standard', label: '标准', hint: '一句话总结 + 5～8 个要点 + 内容脉络' },
-  { value: 'detailed', label: '详细', hint: '8～12 个要点 + 逐段脉络与细节' },
+  { value: 'standard', label: '标准', hint: '一句话总结 + 5～8 个核心要点' },
+  { value: 'detailed', label: '详细', hint: '一句话总结 + 8～12 个核心要点，可附细节' },
 ];
 
 export function VideoSummarySection() {
